@@ -1,0 +1,6 @@
+{
+  "name": "ARCH/STRUCTURE Platform",
+  "description": "Plataforma editorial y libreta técnica de arquitectura con asistente inteligente de IA para redacción y análisis de contenido técnico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

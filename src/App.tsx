@@ -1,79 +1,211 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { X, Calendar, Clock, User, Sparkles, Loader2, Award, HardHat, FileText } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomeFeed from './components/HomeFeed';
 import JournalFeed from './components/JournalFeed';
 import ProjectView from './components/ProjectView';
-import EntryEditor from './components/EntryEditor';
-import { initialJournalEntries } from './data';
-import { JournalEntry, MagazineArticle } from './types';
-
-// Full technical detailed contents for active construction curriculum lessons
-const articleFullTexts: Record<string, string[]> = {
-  'dosificacion-hormigonera': [
-    'La correcta dosificación de hormigones y morteros en la hormigonera eléctrica de tambor del patio de edificación constituye una de las primeras prácticas ineludibles para los alumnos de Grado Medio de Construcción. El balance exacto entre conglomerante (cemento), agua de amasado y áridos (arenas y gravas) determina tanto el comportamiento mecánico proyectado como la durabilidad del elemento edificado final.',
-    'En nuestro taller aplicamos la regla práctica de dosificaciones volumétricas basándonos en el peso específico aparente y la humedad de los áridos. Un exceso de agua de amasado es un error recurrente sumamente crítico; si bien simplifica la trabajabilidad del mortero fresco para el operario, debilita la matriz de cemento endurecido al generar huecos capilares tras su evaporación, rebajando drásticamente la resistencia fck calculada en el proyecto técnico según la directiva del Código Estructural.',
-    'Para dominar este control, realizamos el Ensayo de Consistencia mediante el Cono de Abrams en el patio de prácticas. Midiendo el asiento de la masa fresca tras retirar el molde cónico, clasificamos el hormigón en consistencia seca, plástica, blanda o fluida. Esta lección práctica faculta a los alumnos para supervisar y certificar mezclas idóneas en cualquier cimentación real.'
-  ],
-  'cultura-preventiva-casco': [
-    'La prevención de riesgos laborales (PRL) no es un módulo teórico inerte de examen escrito; es la disciplina rectora que salva vidas en los tajos reales de edificación. En el I.E.S. Virgen del Mar inculcamos la cultura preventiva como el primer andamio del aprendizaje: el uso obligatorio del casco homologado EN 397 y las botas con puntera reforzada S3 es obligatorio antes de realizar cualquier replanteo.',
-    'Los incidentes usuales en obras menores provienen de descuidos fortuitos: el desprendimiento de un bardo cerámico al levantar tabiquería, el tropiezo con varillas de armado expuestas en cimientos o quemaduras químicas en las manos al manipular cemento fresco sin guantes de nitrilo. Un excelente técnico de FP asume la responsabilidad de liderar con rigor higiénico, exigiendo limpieza y orden continuo en el patio de obras.',
-    'Estudiamos el Real Decreto 1627/1997 sobre disposiciones mínimas de seguridad en obras de construcción para capacitar a nuestros alumnos como futuros coordinadores de seguridad. El éxito docente reside en integrar las medidas preventivas directamente en la planificación temporal y económica del proyecto, logrando profesionales eficientes, meticulosos y comprometidos con el residuo cero.'
-  ],
-  'empleo-fp-construccion': [
-    'La familia profesional de Edificación y Obra Civil experimenta un periodo de inserción laboral excepcional sin precedentes históricos. La acelerada digitalización de las constructoras mediante metodologías de modelado virtual BIM (Building Information Modeling), sumada a la jubilación masiva de mandos intermedios en Almería, convierte a los técnicos formados en perfiles cotizadísimos.',
-    'Nuestros titulados de Grado Superior en Proyectos de Edificación no se limitan al dibujo asistido CAD convencional de planos 2D; se gradúan modelando gemelos digitales completos en 3D, extrayendo de forma automatizada presupuestos de materiales y estructurando planes de control de calidad. Las empresas locales reclaman activamente ayudantes de jefe de obra, encargados de compras, delineantes y técnicos de oficina técnica.',
-    'La colaboración bidireccional con el tejido industrial de la provincia permite concertar las estancias de Formación en Centros de Trabajo (FCT) en despachos de ingeniería y constructoras líderes. Esta estrecha relación genera que la práctica totalidad de los alumnos egresados con actitud proactiva consoliden un empleo estable antes de finalizar el curso escolar.'
-  ]
-};
+import LoginPanel from './components/LoginPanel';
+import PostEditor from './components/PostEditor';
+import VisualSiteEditor from './components/VisualSiteEditor';
+import {
+  AuthSession,
+  AuthUser,
+  ContentSection,
+  DEFAULT_SITE_VISUAL_CONFIG,
+  JournalEntry,
+  MagazineArticle,
+  SitePage,
+  SiteVisualConfig,
+} from './types';
+import {
+  createArticle as createArticleRequest,
+  CreateArticlePayload,
+  deleteArticle as deleteArticleRequest,
+  getCurrentUser,
+  getMyArticles,
+  getPublishedArticles,
+  getSiteVisualConfig,
+  login as loginRequest,
+  logout as logoutRequest,
+  saveSiteVisualConfig,
+  updateArticle as updateArticleRequest,
+} from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'portfolio' | 'notebook' | 'editor'>('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [selectedArticle, setSelectedArticle] = useState<MagazineArticle | null>(null);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [editingEntry, setEditingEntry] = useState<JournalEntry | undefined>(undefined);
+  const [editingPost, setEditingPost] = useState<MagazineArticle | undefined>();
+  const [defaultPostSection, setDefaultPostSection] = useState<ContentSection>('magazine');
+  const [publishedArticles, setPublishedArticles] = useState<MagazineArticle[]>([]);
+  const [myArticles, setMyArticles] = useState<MagazineArticle[]>([]);
+  const [articlesError, setArticlesError] = useState('');
+  const [myArticlesError, setMyArticlesError] = useState('');
+  const [siteConfig, setSiteConfig] = useState<SiteVisualConfig>(DEFAULT_SITE_VISUAL_CONFIG);
+  const [savedSiteConfig, setSavedSiteConfig] = useState<SiteVisualConfig>(DEFAULT_SITE_VISUAL_CONFIG);
+  const [visualEditorOpen, setVisualEditorOpen] = useState(false);
+  const [visualEditMode, setVisualEditMode] = useState(false);
+  const [siteConfigLoadingError, setSiteConfigLoadingError] = useState('');
+  const [siteConfigSavingError, setSiteConfigSavingError] = useState('');
+  const [siteConfigSaving, setSiteConfigSaving] = useState(false);
+  const [token, setToken] = useState(() => sessionStorage.getItem('revista_access_token') || '');
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(() => Boolean(sessionStorage.getItem('revista_access_token')));
+  const [authError, setAuthError] = useState('');
 
   // AI Summary states for open article
   const [articleSummary, setArticleSummary] = useState<string>('');
   const [aiLoading, setAiLoading] = useState<boolean>(false);
 
-  // Load entries from localStorage or fallback to default entries
   useEffect(() => {
-    const saved = localStorage.getItem('arch_notebook_entries');
-    if (saved) {
-      try {
-        setJournalEntries(JSON.parse(saved));
-      } catch (e) {
-        setJournalEntries(initialJournalEntries);
-      }
-    } else {
-      setJournalEntries(initialJournalEntries);
-      localStorage.setItem('arch_notebook_entries', JSON.stringify(initialJournalEntries));
-    }
+    getPublishedArticles()
+      .then(setPublishedArticles)
+      .catch((error: unknown) => {
+        setArticlesError(error instanceof Error ? error.message : 'Error de conexión.');
+      });
   }, []);
 
-  // Save entries when they change
-  const saveEntries = (updated: JournalEntry[]) => {
-    setJournalEntries(updated);
-    localStorage.setItem('arch_notebook_entries', JSON.stringify(updated));
+  useEffect(() => {
+    getSiteVisualConfig()
+      .then((config) => {
+        setSiteConfig(config);
+        setSavedSiteConfig(config);
+      })
+      .catch((error: unknown) => {
+        setSiteConfigLoadingError(error instanceof Error ? error.message : 'Error de conexión.');
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!token) {
+      setMyArticles([]);
+      setAuthLoading(false);
+      return;
+    }
+
+    getCurrentUser(token)
+      .then(setUser)
+      .catch((error: unknown) => {
+        sessionStorage.removeItem('revista_access_token');
+        setToken('');
+        setUser(null);
+        setAuthError(error instanceof Error ? error.message : 'La sesión ya no es válida.');
+      })
+      .finally(() => setAuthLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !user) return;
+    getMyArticles(token)
+      .then(setMyArticles)
+      .catch((error: unknown) => {
+        setMyArticlesError(error instanceof Error ? error.message : 'No se pudieron cargar tus publicaciones.');
+      });
+  }, [token, user]);
+
+  const handleLogin = async (email: string, password: string): Promise<AuthSession> => {
+    const session = await loginRequest(email, password);
+    return session;
   };
 
-  const handlePublish = (newEntry: JournalEntry) => {
-    // Check if editing or creating
-    const exists = journalEntries.some(e => e.id === newEntry.id);
-    let updated: JournalEntry[];
-    if (exists) {
-      updated = journalEntries.map(e => e.id === newEntry.id ? newEntry : e);
-    } else {
-      updated = [newEntry, ...journalEntries];
+  const handleAuthenticated = (session: AuthSession) => {
+    sessionStorage.setItem('revista_access_token', session.token);
+    setToken(session.token);
+    setUser(session.user);
+    setAuthError('');
+    setActiveTab('editor');
+  };
+
+  const handleLogout = async () => {
+    const currentToken = token;
+    sessionStorage.removeItem('revista_access_token');
+    setToken('');
+    setUser(null);
+    setMyArticles([]);
+    setVisualEditMode(false);
+    setVisualEditorOpen(false);
+    setActiveTab('home');
+    if (currentToken) {
+      try {
+        await logoutRequest(currentToken);
+      } catch (error) {
+        setAuthError(error instanceof Error ? error.message : 'No se pudo invalidar la sesión en el servidor.');
+      }
     }
-    saveEntries(updated);
-    setEditingEntry(undefined);
-    setActiveTab('notebook');
+  };
+
+  const handlePublish = async (payload: CreateArticlePayload): Promise<MagazineArticle> => {
+    if (!token) {
+      throw new Error('Inicia sesión de nuevo para publicar.');
+    }
+    return editingPost
+      ? updateArticleRequest(token, editingPost.id, payload)
+      : createArticleRequest(token, payload);
+  };
+
+  const handlePublished = (article: MagazineArticle) => {
+    setPublishedArticles((currentArticles) => [article, ...currentArticles.filter(item => item.id !== article.id)]);
+    setMyArticles((currentArticles) => [article, ...currentArticles.filter(item => item.id !== article.id)]);
+    setEditingPost(undefined);
+    setDefaultPostSection(article.section || 'magazine');
+    setActiveTab(article.section === 'notebook' ? 'notebook' : article.section === 'project' ? 'portfolio' : 'home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleDeletePost = async (article: MagazineArticle) => {
+    if (!token) throw new Error('Inicia sesión de nuevo para eliminar publicaciones.');
+    await deleteArticleRequest(token, article.id);
+    setPublishedArticles(currentArticles => currentArticles.filter(item => item.id !== article.id));
+    setMyArticles(currentArticles => currentArticles.filter(item => item.id !== article.id));
+    if (editingPost?.id === article.id) setEditingPost(undefined);
+  };
+
+  const handleAddPost = (section: ContentSection) => {
+    setDefaultPostSection(section);
+    setEditingPost(undefined);
+    setActiveTab('editor');
+  };
+
+  const handleVisualEditToggle = () => {
+    if (user?.role !== 'admin') return;
+    if (activeTab === 'editor') setActiveTab('home');
+    setVisualEditorOpen(true);
+    setVisualEditMode(current => !current);
+    setSiteConfigSavingError('');
+  };
+
+  const handleSaveSiteConfig = async () => {
+    if (!token) {
+      setSiteConfigSavingError('Inicia sesión para guardar los cambios del diseño.');
+      return;
+    }
+    setSiteConfigSaving(true);
+    setSiteConfigSavingError('');
+    try {
+      const config = await saveSiteVisualConfig(token, siteConfig);
+      setSiteConfig(config);
+      setSavedSiteConfig(config);
+    } catch (error) {
+      setSiteConfigSavingError(error instanceof Error ? error.message : 'Error al guardar el diseño.');
+    } finally {
+      setSiteConfigSaving(false);
+    }
+  };
+
+  const handleCancelVisualChanges = () => {
+    setSiteConfig(savedSiteConfig);
+    setVisualEditMode(false);
+    setVisualEditorOpen(false);
+    setSiteConfigSavingError('');
+  };
+
+  const visualEditorPage: SitePage = activeTab === 'notebook'
+    ? 'notebook'
+    : activeTab === 'portfolio'
+      ? 'project'
+      : 'home';
 
   const handleArticleClick = (article: MagazineArticle) => {
     setSelectedArticle(article);
@@ -86,7 +218,12 @@ export default function App() {
     setAiLoading(true);
     setArticleSummary('');
 
-    const fullContent = (articleFullTexts[selectedArticle.id] || [selectedArticle.excerpt]).join('\n\n');
+    const fullContent = selectedArticle.blocks?.length
+      ? selectedArticle.blocks
+          .filter(block => block.type === 'text' || block.type === 'heading1' || block.type === 'heading2')
+          .map(block => block.content)
+          .join('\n\n')
+      : selectedArticle.excerpt;
 
     try {
       const response = await fetch('/api/ai/assistant', {
@@ -124,6 +261,12 @@ export default function App() {
         }} 
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
+        isAuthenticated={Boolean(user)}
+        canEditSite={user?.role === 'admin'}
+        userName={user?.name}
+        onLogout={handleLogout}
+        visualEditMode={visualEditMode}
+        onToggleVisualEdit={handleVisualEditToggle}
       />
 
       {/* Main Page Area */}
@@ -131,6 +274,11 @@ export default function App() {
         {activeTab === 'home' && (
           <HomeFeed 
             onArticleClick={handleArticleClick}
+            siteConfig={siteConfig}
+            articles={[
+              ...publishedArticles.filter(article => !article.section || article.section === 'magazine'),
+            ]}
+            articlesError={articlesError}
             onProjectClick={(projId) => {
               setActiveTab('portfolio');
               setSelectedArticle(null);
@@ -143,24 +291,60 @@ export default function App() {
         )}
 
         {activeTab === 'portfolio' && (
-          <ProjectView projectId="proyecto-modulo-practicas" />
+          <ProjectView
+            projectId="proyecto-modulo-practicas"
+            updates={publishedArticles.filter(article => article.section === 'project')}
+            onAddUpdate={() => handleAddPost('project')}
+            onReadUpdate={handleArticleClick}
+            siteConfig={siteConfig}
+          />
         )}
 
         {activeTab === 'notebook' && (
           <JournalFeed 
-            entries={journalEntries}
+            siteConfig={siteConfig}
+            entries={[
+              ...publishedArticles
+                .filter(article => article.section === 'notebook')
+                .map((article): JournalEntry => ({
+                  id: article.id,
+                  date: article.publishedAt
+                    ? new Date(article.publishedAt).toLocaleDateString('es-ES')
+                    : '',
+                  logNum: article.id,
+                  tag: article.category,
+                  title: article.title,
+                  blocks: article.blocks || [{ id: `${article.id}-body`, type: 'text', content: article.excerpt }],
+                })),
+            ]}
             onAddClick={() => {
-              setEditingEntry(undefined);
-              setActiveTab('editor');
+              handleAddPost('notebook');
             }}
           />
         )}
 
         {activeTab === 'editor' && (
-          <EntryEditor 
-            onPublish={handlePublish}
-            initialEntry={editingEntry}
-          />
+          authLoading ? (
+            <main className="flex min-h-[70vh] items-center justify-center pt-20 font-mono text-xs font-bold text-gray-600">
+              COMPROBANDO SESIÓN...
+            </main>
+          ) : user ? (
+            <PostEditor
+              key={editingPost?.id || `new-${defaultPostSection}`}
+              token={token}
+              authorName={user.name}
+              articles={myArticles}
+              articlesError={myArticlesError}
+              defaultSection={defaultPostSection}
+              editingArticle={editingPost}
+              onPublish={handlePublish}
+              onPublished={handlePublished}
+              onEdit={(article) => setEditingPost(article)}
+              onDelete={handleDeletePost}
+            />
+          ) : (
+            <LoginPanel onLogin={handleLogin} onAuthenticated={handleAuthenticated} />
+          )
         )}
       </div>
 
@@ -174,7 +358,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-white" />
                 <span className="font-mono text-xs font-black uppercase tracking-widest">
-                  REVISTA DIGITAL // {selectedArticle.tag}
+                  PUBLICACIÓN // {selectedArticle.tag}
                 </span>
               </div>
               <button 
@@ -207,7 +391,9 @@ export default function App() {
                   <span className="w-1 h-1 bg-black"></span>
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-[#facc15]" />
-                    CURSO LECTIVO 2025/26
+                    {selectedArticle.publishedAt
+                      ? new Date(selectedArticle.publishedAt).toLocaleDateString('es-ES')
+                      : 'REVISTA DIGITAL'}
                   </span>
                   <span className="w-1 h-1 bg-black"></span>
                   <span className="flex items-center gap-1.5">
@@ -219,22 +405,34 @@ export default function App() {
 
               {/* Huge Image Frame with Mondrian Border */}
               <div className="bg-gray-100 border-[3px] border-black p-1">
-                <img 
-                  className="w-full h-auto object-cover border border-black" 
-                  src={selectedArticle.heroImage} 
-                  alt={selectedArticle.title}
-                  referrerPolicy="no-referrer"
-                />
+                {selectedArticle.heroImage && (
+                  <img
+                    className="w-full h-auto object-cover border border-black"
+                    src={selectedArticle.heroImage}
+                    alt={selectedArticle.title}
+                    referrerPolicy="no-referrer"
+                  />
+                )}
               </div>
 
               {/* Text Body */}
-              <div className="space-y-5 font-sans text-xs md:text-sm text-gray-700 leading-relaxed font-semibold">
-                {articleFullTexts[selectedArticle.id] ? (
-                  articleFullTexts[selectedArticle.id].map((para, pIdx) => (
-                    <p key={pIdx} className={pIdx === 0 ? 'text-sm md:text-base text-black font-bold leading-relaxed' : ''}>
-                      {para}
-                    </p>
-                  ))
+              <div className="article-rich-content space-y-5 font-sans text-xs md:text-sm text-gray-700 leading-relaxed font-semibold">
+                {selectedArticle.blocks?.some(block => block.type === 'html') ? (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(
+                        selectedArticle.blocks.find(block => block.type === 'html')?.content || ''
+                      ),
+                    }}
+                  />
+                ) : selectedArticle.blocks?.length ? (
+                  selectedArticle.blocks
+                    .filter(block => block.type === 'text' || block.type === 'heading1' || block.type === 'heading2')
+                    .map((block) => (
+                      <p key={block.id} className={block.type === 'heading1' || block.type === 'heading2' ? 'font-serif text-base font-black text-black' : ''}>
+                        {block.content}
+                      </p>
+                    ))
                 ) : (
                   <p>{selectedArticle.excerpt}</p>
                 )}
@@ -286,6 +484,29 @@ export default function App() {
           setSelectedArticle(null);
         }}
       />
+      <VisualSiteEditor
+        token={token}
+        config={siteConfig}
+        page={visualEditorPage}
+        editing={Boolean(user?.role === 'admin' && visualEditMode)}
+        panelOpen={Boolean(user?.role === 'admin' && visualEditorOpen)}
+        saving={siteConfigSaving}
+        loadError={siteConfigLoadingError}
+        saveError={siteConfigSavingError}
+        onConfigChange={setSiteConfig}
+        onSave={handleSaveSiteConfig}
+        onCancel={handleCancelVisualChanges}
+        onClose={() => {
+          setVisualEditorOpen(false);
+          setVisualEditMode(false);
+        }}
+      />
+      {authError && !user && (
+        <div role="status" className="fixed bottom-4 left-4 z-[60] max-w-sm border-2 border-black bg-yellow-100 p-3 font-mono text-[10px] font-bold text-black shadow-lg">
+          {authError}
+          <button onClick={() => setAuthError('')} className="ml-3 underline">Cerrar</button>
+        </div>
+      )}
     </div>
   );
 }

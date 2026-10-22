@@ -1,14 +1,31 @@
 import { MouseEvent } from 'react';
-import { Menu, Search, User, HardHat } from 'lucide-react';
+import { Menu, Search, HardHat, LogOut, Palette } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'home' | 'portfolio' | 'notebook' | 'editor';
   setActiveTab: (tab: 'home' | 'portfolio' | 'notebook' | 'editor') => void;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
+  isAuthenticated: boolean;
+  canEditSite: boolean;
+  userName?: string;
+  onLogout: () => void;
+  visualEditMode: boolean;
+  onToggleVisualEdit: () => void;
 }
 
-export default function Navbar({ activeTab, setActiveTab, mobileMenuOpen, setMobileMenuOpen }: NavbarProps) {
+export default function Navbar({
+  activeTab,
+  setActiveTab,
+  mobileMenuOpen,
+  setMobileMenuOpen,
+  isAuthenticated,
+  canEditSite,
+  userName,
+  onLogout,
+  visualEditMode,
+  onToggleVisualEdit,
+}: NavbarProps) {
   const handleNavClick = (tab: 'home' | 'portfolio' | 'notebook' | 'editor', e: MouseEvent) => {
     e.preventDefault();
     setActiveTab(tab);
@@ -17,7 +34,7 @@ export default function Navbar({ activeTab, setActiveTab, mobileMenuOpen, setMob
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full h-20 bg-white border-b-[4px] border-black z-50 transition-all duration-300">
+      <header data-site-region="global" className="fixed top-0 left-0 w-full h-20 bg-white border-b-[4px] border-black z-50 transition-all duration-300">
         <div className="flex justify-between items-stretch w-full px-4 md:px-8 h-full">
           {/* Left Side: Brand and Desktop Nav */}
           <div className="flex items-stretch gap-4">
@@ -119,10 +136,30 @@ export default function Navbar({ activeTab, setActiveTab, mobileMenuOpen, setMob
               onClick={(e) => handleNavClick('editor', e)}
               className="btn-icon px-5" 
               aria-label="Profile"
-              title="Panel de Redacción de IA"
+              title={isAuthenticated ? `Redacción: ${userName}` : 'Acceso de redacción'}
             >
               <HardHat className="w-5 h-5 text-black" />
             </button>
+            {isAuthenticated && canEditSite && (
+              <button
+                onClick={onToggleVisualEdit}
+                className={`btn-icon border-l-[3px] border-black px-3 ${visualEditMode ? 'bg-[#facc15]' : ''}`}
+                aria-label={visualEditMode ? 'Salir del modo diseño' : 'Editar diseño del sitio'}
+                title={visualEditMode ? 'Salir del modo diseño' : 'Editar diseño del sitio'}
+              >
+                <Palette className="h-4 w-4 text-black" />
+              </button>
+            )}
+            {isAuthenticated && (
+              <button
+                onClick={onLogout}
+                className="btn-icon border-l-[3px] border-black px-3"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <LogOut className="h-4 w-4 text-black" />
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -138,6 +175,7 @@ export default function Navbar({ activeTab, setActiveTab, mobileMenuOpen, setMob
 
       {/* Mobile Drawer Menu - Styled with heavy borders and primary color squares */}
       <div 
+        data-site-region="global"
         className={`fixed top-0 left-0 h-full w-64 bg-white border-r-[4px] border-black z-50 shadow-2xl transition-transform duration-300 md:hidden pt-24 px-6 ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -160,6 +198,21 @@ export default function Navbar({ activeTab, setActiveTab, mobileMenuOpen, setMob
               <div className="w-3 h-3 bg-[#ef4444] border border-black"></div>
               Revista / Logs
             </a>
+            {isAuthenticated && canEditSite && (
+              <button
+                type="button"
+                onClick={() => {
+                  onToggleVisualEdit();
+                  setMobileMenuOpen(false);
+                }}
+                className={`label-nav py-3 px-4 border-2 border-black flex items-center gap-3 text-left transition-colors ${
+                  visualEditMode ? 'bg-[#facc15] text-black' : 'bg-white text-black hover:bg-yellow-50'
+                }`}
+              >
+                <Palette className="h-4 w-4 text-black" />
+                {visualEditMode ? 'Salir del modo diseño' : 'Editar diseño'}
+              </button>
+            )}
             <a
               href="#"
               onClick={(e) => handleNavClick('portfolio', e)}
@@ -194,7 +247,7 @@ export default function Navbar({ activeTab, setActiveTab, mobileMenuOpen, setMob
               }`}
             >
               <div className="w-3 h-3 bg-black border border-white"></div>
-              Redacción IA
+              Redacción
             </a>
           </nav>
 

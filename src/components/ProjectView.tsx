@@ -1,13 +1,24 @@
 import { useState, FormEvent } from 'react';
 import { initialProjects } from '../data';
-import { Comment } from '../types';
-import { Award, Layers, Compass, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Comment, MagazineArticle, SiteVisualConfig } from '../types';
+import { Award, Layers, Compass, AlertTriangle, MessageSquare, Plus } from 'lucide-react';
+import CustomSiteModules from './CustomSiteModules';
 
 interface ProjectViewProps {
   projectId?: string;
+  updates: MagazineArticle[];
+  onAddUpdate: () => void;
+  onReadUpdate: (article: MagazineArticle) => void;
+  siteConfig: SiteVisualConfig;
 }
 
-export default function ProjectView({ projectId = 'proyecto-modulo-practicas' }: ProjectViewProps) {
+export default function ProjectView({
+  projectId = 'proyecto-modulo-practicas',
+  updates,
+  onAddUpdate,
+  onReadUpdate,
+  siteConfig,
+}: ProjectViewProps) {
   // Always resolve to our custom pre-loaded project if id matches or by default
   const project = initialProjects.find(p => p.id === projectId) || initialProjects[0];
 
@@ -40,12 +51,13 @@ export default function ProjectView({ projectId = 'proyecto-modulo-practicas' }:
   };
 
   return (
-    <div className="w-full bg-white min-h-screen pt-20 pb-12" id="project-detail-view">
+    <div className="w-full bg-white min-h-screen pt-20 pb-12" id="project-detail-view" data-site-page="project">
       
       {/* Hero Section Frame with heavy border */}
-      <section className="w-full h-[500px] md:h-[650px] relative overflow-hidden px-4 md:px-8 mt-6">
+      <section data-site-module="project-hero" data-site-page="project" className="w-full h-[500px] md:h-[650px] relative overflow-hidden px-4 md:px-8 mt-6">
         <div className="w-full h-full border-[4px] border-black relative overflow-hidden bg-gray-200">
           <div 
+            data-site-image-editable="project-hero"
             className="w-full h-full bg-cover bg-center transition-all duration-700 hover:scale-101 grayscale-[0.1]" 
             style={{ backgroundImage: `url('${project.heroImage}')` }}
           />
@@ -66,7 +78,7 @@ export default function ProjectView({ projectId = 'proyecto-modulo-practicas' }:
       </section>
 
       {/* Technical Metadata Bar in Mondrian Layout (Thick borders & divided cells) */}
-      <section className="px-4 md:px-8 py-6" id="technical-metadata">
+      <section data-site-module="project-metadata" data-site-page="project" className="px-4 md:px-8 py-6" id="technical-metadata">
         <div className="border-[4px] border-black bg-black grid grid-cols-2 md:grid-cols-4 gap-[4px]">
           
           <div className="bg-white p-4 flex flex-col justify-center">
@@ -93,7 +105,7 @@ export default function ProjectView({ projectId = 'proyecto-modulo-practicas' }:
       </section>
 
       {/* Project Memory / Description Split */}
-      <section className="px-4 md:px-8 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8" id="project-description-section">
+      <section data-site-module="project-description" data-site-page="project" className="px-4 md:px-8 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8" id="project-description-section">
         
         {/* Left Side: Material Palette */}
         <aside className="lg:col-span-4 border-[3px] border-black p-6 bg-white h-fit lg:sticky lg:top-28">
@@ -166,8 +178,43 @@ export default function ProjectView({ projectId = 'proyecto-modulo-practicas' }:
         </article>
       </section>
 
+      <section data-site-module="project-updates" data-site-page="project" className="px-4 py-10 md:px-8" id="project-updates">
+        <div className="mb-6 flex flex-col gap-4 border-b-[3px] border-black pb-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="label-mono-sm mb-2 block text-[#ef4444]">ACTUALIZACIONES DEL TALLER</span>
+            <h2 className="font-serif text-2xl font-black text-black md:text-3xl">Diario del proyecto</h2>
+          </div>
+          <button onClick={onAddUpdate} className="btn-outline flex w-fit items-center gap-2 px-4 py-3">
+            <Plus className="h-4 w-4" /> PUBLICAR AVANCE
+          </button>
+        </div>
+        {updates.length > 0 ? (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {updates.map((update) => (
+              <article key={update.id} className="cursor-pointer border-[3px] border-black bg-white hover:bg-gray-50" onClick={() => onReadUpdate(update)}>
+                {update.heroImage && (
+                  <img className="h-48 w-full border-b-[3px] border-black object-cover" src={update.heroImage} alt={update.title} />
+                )}
+                <div className="p-5">
+                  <span className="tag-yellow">{update.category}</span>
+                  <h3 className="mt-3 font-serif text-xl font-black text-black">{update.title}</h3>
+                  <p className="mt-2 line-clamp-3 font-sans text-sm leading-relaxed text-gray-700">{update.excerpt}</p>
+                  <p className="mt-4 border-t border-black pt-3 font-mono text-[10px] font-bold uppercase text-gray-500">
+                    {update.author}{update.publishedAt ? ` // ${new Date(update.publishedAt).toLocaleDateString('es-ES')}` : ''}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="border-2 border-black bg-gray-50 p-5 font-mono text-xs font-bold uppercase text-gray-600">
+            Aún no hay avances publicados. Añade aquí las actividades realizadas en el taller.
+          </p>
+        )}
+      </section>
+
       {/* Visual Grid Section */}
-      <section className="px-4 md:px-8 py-6" id="project-visual-grid">
+      <section data-site-module="project-gallery" data-site-page="project" className="px-4 md:px-8 py-6" id="project-visual-grid">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Main big display item with Mondrian border */}
@@ -206,7 +253,7 @@ export default function ProjectView({ projectId = 'proyecto-modulo-practicas' }:
       </section>
 
       {/* Discussion / Comments section */}
-      <section className="px-4 md:px-8 py-12" id="project-discussion">
+      <section data-site-module="project-comments" data-site-page="project" className="px-4 md:px-8 py-12" id="project-discussion">
         <div className="border-[3px] border-black p-6 md:p-8 bg-white max-w-4xl mx-auto">
           
           <h3 className="font-serif font-black text-2xl text-black mb-8 flex items-center gap-2.5 border-b-2 border-black pb-3">
@@ -290,6 +337,8 @@ export default function ProjectView({ projectId = 'proyecto-modulo-practicas' }:
           </div>
         </div>
       </section>
+
+      <CustomSiteModules page="project" modules={siteConfig.customModules.project} />
 
     </div>
   );

@@ -1,15 +1,26 @@
 import { useState, FormEvent } from 'react';
 import { ArrowUpRight, Check, Hammer, Award, ShieldCheck, HelpCircle, HardHat, RefreshCw, Layers } from 'lucide-react';
-import { initialArticles, featuredProjects } from '../data';
-import { MagazineArticle } from '../types';
+import { featuredProjects } from '../data';
+import { MagazineArticle, SiteVisualConfig } from '../types';
+import CustomSiteModules from './CustomSiteModules';
 
 interface HomeFeedProps {
   onArticleClick: (article: MagazineArticle) => void;
   onProjectClick: (projectId: string) => void;
   onNavClick: (tab: 'home' | 'portfolio' | 'notebook' | 'editor') => void;
+  articles: MagazineArticle[];
+  articlesError?: string;
+  siteConfig: SiteVisualConfig;
 }
 
-export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }: HomeFeedProps) {
+export default function HomeFeed({
+  onArticleClick,
+  onProjectClick,
+  onNavClick,
+  articles,
+  articlesError,
+  siteConfig,
+}: HomeFeedProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [newsletterEmail, setNewsletterEmail] = useState<string>('');
   const [newsletterSuccess, setNewsletterSuccess] = useState<boolean>(false);
@@ -37,8 +48,8 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
   const categories = ['ALL', 'TECNOLOGÍA DE MEZCLAS', 'SEGURIDAD EN OBRA', 'SALIDAS PROFESIONALES'];
 
   const filteredArticles = selectedCategory === 'ALL'
-    ? initialArticles
-    : initialArticles.filter(art => art.category === selectedCategory);
+    ? articles
+    : articles.filter(art => art.category === selectedCategory);
 
   const handleSubscribe = (e: FormEvent) => {
     e.preventDefault();
@@ -51,7 +62,7 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
     }
   };
 
-  const mainFeaturedArticle = initialArticles[0]; // El Arte de la Hormigonera
+  const mainFeaturedArticle = articles[0];
 
   // Calculator logic based on standard real-world construction dosages:
   // - structural concrete (1:2:3): ~300kg cement, 650kg sand, 1100kg gravel, 180L water per m3
@@ -105,10 +116,10 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
   const allSafetyChecked = Object.values(safetyChecks).every(val => val === true);
 
   return (
-    <div className="w-full bg-white min-h-screen pt-28 pb-12" id="home-feed-view">
+    <div className="w-full bg-white min-h-screen pt-28 pb-12" id="home-feed-view" data-site-page="home">
       
       {/* 🎨 INTERACTIVE MONDRIAN WELCOME PANEL (CENTERPIECE FROM USER IMAGE) */}
-      <section className="px-4 md:px-8 mt-2 mb-12">
+      <section data-site-module="home-welcome" data-site-page="home" className="px-4 md:px-8 mt-2 mb-12">
         <div className="border-[4px] border-black bg-black grid grid-cols-1 md:grid-cols-12 gap-[4px] overflow-hidden shadow-xl" id="mondrian-banner-grid">
           
           {/* Box 1: Large RED Block - welcomes users */}
@@ -252,7 +263,8 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
       </section>
 
       {/* Hero Featured Article Section */}
-      <section className="px-4 md:px-8 mt-12">
+      {mainFeaturedArticle && (
+      <section data-site-module="home-featured-article" data-site-page="home" className="px-4 md:px-8 mt-12">
         <div className="border-[3px] border-black grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden bg-white">
           <div className="lg:col-span-7 group cursor-pointer overflow-hidden border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-black" onClick={() => onArticleClick(mainFeaturedArticle)}>
             <div className="aspect-[16/10] w-full overflow-hidden bg-gray-100">
@@ -293,9 +305,10 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
           </div>
         </div>
       </section>
+      )}
 
       {/* Categories Scroller - Styled with Mondrian Borders */}
-      <section className="mt-16 border-t-[3px] border-b-[3px] border-black py-4 bg-[#fafaf9]">
+      <section data-site-module="home-categories" data-site-page="home" className="mt-16 border-t-[3px] border-b-[3px] border-black py-4 bg-[#fafaf9]">
         <div className="px-4 md:px-8 overflow-x-auto no-scrollbar flex items-center gap-6">
           <span className="font-mono text-xs font-black text-black tracking-widest uppercase shrink-0 flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-[#facc15] border border-black"></div>
@@ -320,7 +333,7 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
       </section>
 
       {/* Featured Student Projects / Maquetas */}
-      <section className="px-4 md:px-8 mt-16">
+      <section data-site-module="home-featured-projects" data-site-page="home" className="px-4 md:px-8 mt-16">
         <div className="flex justify-between items-end mb-8 border-b-[3px] border-black pb-4">
           <div>
             <span className="label-section">
@@ -374,7 +387,7 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
       </section>
 
       {/* Latest Articles Grid / Revista */}
-      <section className="px-4 md:px-8 mt-20">
+      <section data-site-module="home-articles" data-site-page="home" className="px-4 md:px-8 mt-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 border-t-[3px] border-black pt-12">
           
           <div className="lg:col-span-3">
@@ -390,6 +403,11 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
           </div>
 
           <div className="lg:col-span-9 flex flex-col divide-y-[3px] divide-black border-t-[3px] md:border-t-0 border-b-[3px] border-black divide-black">
+            {articlesError && (
+              <p role="status" className="border-b-2 border-black bg-yellow-50 p-4 font-mono text-xs font-bold text-gray-800">
+                No se han podido cargar las publicaciones del servidor. Inténtalo de nuevo más tarde. {articlesError}
+              </p>
+            )}
             {filteredArticles.map((art) => (
               <article 
                 key={art.id} 
@@ -397,12 +415,14 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
                 onClick={() => onArticleClick(art)}
               >
                 <div className="md:col-span-1 aspect-square bg-gray-100 border-2 border-black overflow-hidden max-w-[140px] md:max-w-none">
-                  <img 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103" 
-                    src={art.heroImage} 
-                    alt={art.title}
-                    referrerPolicy="no-referrer"
-                  />
+                  {art.heroImage && (
+                    <img
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
+                      src={art.heroImage}
+                      alt={art.title}
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
                 </div>
                 <div className="md:col-span-3 flex flex-col justify-between py-1">
                   <div>
@@ -428,13 +448,18 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
                 </div>
               </article>
             ))}
+            {filteredArticles.length === 0 && (
+              <p className="py-8 font-mono text-xs font-bold uppercase text-gray-500">
+                Todavía no hay publicaciones en esta categoría.
+              </p>
+            )}
           </div>
 
         </div>
       </section>
 
       {/* Newsletter Section */}
-      <section className="mt-20 bg-white border-t-[3px] border-b-[3px] border-black py-16">
+      <section data-site-module="home-newsletter" data-site-page="home" className="mt-20 bg-white border-t-[3px] border-b-[3px] border-black py-16">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <span className="font-mono text-xs font-black tracking-widest text-[#ef4444] mb-2 block uppercase">
             SINDICACIÓN
@@ -481,6 +506,8 @@ export default function HomeFeed({ onArticleClick, onProjectClick, onNavClick }:
           )}
         </div>
       </section>
+
+      <CustomSiteModules page="home" modules={siteConfig.customModules.home} />
 
       {/* ⚙️ MODAL 1: INTERACTIVE CONCRETE MIX CALCULATOR */}
       {showCalculator && (

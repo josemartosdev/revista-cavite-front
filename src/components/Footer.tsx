@@ -6,7 +6,7 @@ interface FooterProps {
 
 export default function Footer({ onNavClick }: FooterProps) {
   return (
-    <footer className="w-full bg-white border-t-[4px] border-black grid grid-cols-1 md:grid-cols-12 gap-0 overflow-hidden" id="platform-footer">
+    <footer data-site-region="global" className="w-full bg-white border-t-[4px] border-black grid grid-cols-1 md:grid-cols-12 gap-0 overflow-hidden" id="platform-footer">
       
       {/* Brand Column / Left Block - large white block with right black border */}
       <div className="md:col-span-5 p-8 md:p-12 border-b-[4px] md:border-b-0 md:border-r-[4px] border-black flex flex-col justify-between space-y-6">

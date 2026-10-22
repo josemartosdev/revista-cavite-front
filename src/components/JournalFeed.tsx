@@ -1,22 +1,26 @@
+import DOMPurify from 'dompurify';
 import { MapPin, Plus, Share2, Mail, ExternalLink, HardHat, ClipboardList } from 'lucide-react';
 import { JournalEntry } from '../types';
+import { SiteVisualConfig } from '../types';
+import CustomSiteModules from './CustomSiteModules';
 
 interface JournalFeedProps {
   entries: JournalEntry[];
   onAddClick: () => void;
+  siteConfig: SiteVisualConfig;
 }
 
-export default function JournalFeed({ entries, onAddClick }: JournalFeedProps) {
+export default function JournalFeed({ entries, onAddClick, siteConfig }: JournalFeedProps) {
   const handleMapClick = (title: string) => {
     alert(`Ubicación de Obra: Patio de Prácticas del I.E.S. Virgen del Mar\nCoordenadas: 36.7513° N, 3.0134° W (Almería, España)\nUso académico autorizado.`);
   };
 
   return (
-    <div className="w-full bg-white min-h-screen pt-32 pb-24" id="journal-feed-view">
+    <div className="w-full bg-white min-h-screen pt-32 pb-24" id="journal-feed-view" data-site-page="notebook">
       <main className="max-w-screen-xl mx-auto px-4 md:px-8">
         
         {/* Header Section styled in Mondrian horizontal panel */}
-        <section className="mb-16">
+        <section data-site-module="notebook-heading" data-site-page="notebook" className="mb-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b-[4px] border-black">
             <div>
               <span className="label-mono-sm text-[#ef4444] mb-2 block">
@@ -34,7 +38,7 @@ export default function JournalFeed({ entries, onAddClick }: JournalFeedProps) {
         </section>
 
         {/* The Notebook Stream */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
+        <div data-site-module="notebook-stream" data-site-page="notebook" className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
           
           {/* Left Margin Labels (Desktop Only) - styled as Mondrian grid rail */}
           <aside className="hidden lg:block lg:col-span-1 border-r-[3px] border-black h-full pt-4">
@@ -188,6 +192,7 @@ export default function JournalFeed({ entries, onAddClick }: JournalFeedProps) {
               }
 
               // Default rendering (e.g. Dosificación de mortero)
+              const htmlBlock = entry.blocks.find(b => b.type === 'html');
               const textBlocks = entry.blocks.filter(b => b.type === 'text');
               const imageBlock = entry.blocks.find(b => b.type === 'image');
 
@@ -204,11 +209,18 @@ export default function JournalFeed({ entries, onAddClick }: JournalFeedProps) {
                         <h3 className="font-serif font-black text-2xl text-black group-hover:text-[#ef4444] transition-colors leading-snug">
                           {entry.title}
                         </h3>
-                        <div className="space-y-3 font-sans text-xs text-gray-600 leading-relaxed font-semibold mt-4">
-                          {textBlocks.map(block => (
-                            <p key={block.id}>{block.content}</p>
-                          ))}
-                        </div>
+                        {htmlBlock ? (
+                          <div
+                            className="article-rich-content font-sans text-xs text-gray-600 leading-relaxed font-semibold mt-4"
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlBlock.content) }}
+                          />
+                        ) : (
+                          <div className="space-y-3 font-sans text-xs text-gray-600 leading-relaxed font-semibold mt-4">
+                            {textBlocks.map(block => (
+                              <p key={block.id}>{block.content}</p>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="md:w-1/2">
                         {imageBlock && (
@@ -234,13 +246,15 @@ export default function JournalFeed({ entries, onAddClick }: JournalFeedProps) {
             })}
           </div>
         </div>
+        <CustomSiteModules page="notebook" modules={siteConfig.customModules.notebook} />
       </main>
 
       {/* Float Action Button (FAB) for adding new entries */}
       <button 
         onClick={onAddClick}
         className="btn-fab group"
-        title="Crear Nueva Entrada en Bitácora"
+        title="Crear una publicación para la revista"
+        aria-label="Publicar un artículo en la revista"
         id="fab-add-entry"
       >
         <Plus className="w-6 h-6 transform group-hover:rotate-90 transition-transform duration-300" />

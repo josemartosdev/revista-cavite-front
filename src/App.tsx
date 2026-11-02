@@ -35,7 +35,6 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'portfolio' | 'notebook' | 'editor'>('home');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [selectedArticle, setSelectedArticle] = useState<MagazineArticle | null>(null);
   const [editingPost, setEditingPost] = useState<MagazineArticle | undefined>();
   const [defaultPostSection, setDefaultPostSection] = useState<ContentSection>('magazine');
@@ -105,8 +104,8 @@ export default function App() {
       });
   }, [token, user]);
 
-  const handleLogin = async (email: string, password: string): Promise<AuthSession> => {
-    const session = await loginRequest(email, password);
+  const handleLogin = async (username: string, password: string): Promise<AuthSession> => {
+    const session = await loginRequest(username, password);
     return session;
   };
 
@@ -259,8 +258,6 @@ export default function App() {
           setActiveTab(tab);
           setSelectedArticle(null);
         }} 
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
         isAuthenticated={Boolean(user)}
         canEditSite={user?.role === 'admin'}
         userName={user?.name}
@@ -325,7 +322,7 @@ export default function App() {
 
         {activeTab === 'editor' && (
           authLoading ? (
-            <main className="flex min-h-[70vh] items-center justify-center pt-20 font-mono text-xs font-bold text-gray-600">
+            <main className="flex min-h-[70vh] items-center justify-center pt-28 font-mono text-xs font-bold text-gray-600 md:pt-20">
               COMPROBANDO SESIÓN...
             </main>
           ) : user ? (

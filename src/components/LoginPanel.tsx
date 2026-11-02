@@ -3,12 +3,12 @@ import { KeyRound, Loader2, LockKeyhole } from 'lucide-react';
 import { AuthSession } from '../types';
 
 interface LoginPanelProps {
-  onLogin: (email: string, password: string) => Promise<AuthSession>;
+  onLogin: (username: string, password: string) => Promise<AuthSession>;
   onAuthenticated: (session: AuthSession) => void;
 }
 
 export default function LoginPanel({ onLogin, onAuthenticated }: LoginPanelProps) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function LoginPanel({ onLogin, onAuthenticated }: LoginPanelProps
     setLoading(true);
 
     try {
-      const session = await onLogin(email.trim(), password);
+      const session = await onLogin(username.trim(), password);
       onAuthenticated(session);
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'No se pudo iniciar sesión.');
@@ -40,13 +40,13 @@ export default function LoginPanel({ onLogin, onAuthenticated }: LoginPanelProps
         </div>
         <form onSubmit={handleSubmit} className="space-y-5 p-6 md:p-8">
           <label className="block">
-            <span className="label-mono-sm mb-2 block text-black">CORREO ELECTRÓNICO</span>
+            <span className="label-mono-sm mb-2 block text-black">USUARIO</span>
             <input
               required
               autoComplete="username"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               className="w-full border-2 border-black bg-white px-3 py-3 font-sans text-sm text-black outline-none focus:border-[#2563eb]"
             />
           </label>

@@ -90,7 +90,8 @@ export const SECTION_CATEGORIES: Record<ContentSection, readonly string[]> = {
 export interface AuthUser {
   id: string;
   name: string;
-  email: string;
+  username: string;
+  email: string | null;
   role?: 'admin' | 'editor';
 }
 

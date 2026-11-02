@@ -51,7 +51,7 @@ export default function ProjectView({
   };
 
   return (
-    <div className="w-full bg-white min-h-screen pt-20 pb-12" id="project-detail-view" data-site-page="project">
+    <div className="w-full bg-white min-h-screen pt-28 pb-12 md:pt-20" id="project-detail-view" data-site-page="project">
       
       {/* Hero Section Frame with heavy border */}
       <section data-site-module="project-hero" data-site-page="project" className="w-full h-[500px] md:h-[650px] relative overflow-hidden px-4 md:px-8 mt-6">

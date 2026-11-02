@@ -1,11 +1,9 @@
 import { MouseEvent } from 'react';
-import { Menu, Search, HardHat, LogOut, Palette } from 'lucide-react';
+import { Search, HardHat, LogOut, Palette } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'home' | 'portfolio' | 'notebook' | 'editor';
   setActiveTab: (tab: 'home' | 'portfolio' | 'notebook' | 'editor') => void;
-  mobileMenuOpen: boolean;
-  setMobileMenuOpen: (open: boolean) => void;
   isAuthenticated: boolean;
   canEditSite: boolean;
   userName?: string;
@@ -17,8 +15,6 @@ interface NavbarProps {
 export default function Navbar({
   activeTab,
   setActiveTab,
-  mobileMenuOpen,
-  setMobileMenuOpen,
   isAuthenticated,
   canEditSite,
   userName,
@@ -29,25 +25,14 @@ export default function Navbar({
   const handleNavClick = (tab: 'home' | 'portfolio' | 'notebook' | 'editor', e: MouseEvent) => {
     e.preventDefault();
     setActiveTab(tab);
-    setMobileMenuOpen(false);
   };
 
   return (
     <>
-      <header data-site-region="global" className="fixed top-0 left-0 w-full h-20 bg-white border-b-[4px] border-black z-50 transition-all duration-300">
-        <div className="flex justify-between items-stretch w-full px-4 md:px-8 h-full">
-          {/* Left Side: Brand and Desktop Nav */}
-          <div className="flex items-stretch gap-4">
-            <div className="flex items-center gap-2 md:gap-3 py-1">
-              <button 
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-                className="btn-icon p-2 border-2 border-black rounded-none md:hidden"
-                aria-label="Toggle Menu"
-                id="mobile-menu-btn"
-              >
-                <Menu className="w-5 h-5 text-black" />
-              </button>
-              
+      <header data-site-region="global" className="fixed top-0 left-0 w-full h-28 md:h-20 bg-white border-b-[4px] border-black z-50 transition-all duration-300">
+        <div className="flex flex-col md:flex-row md:justify-between items-stretch w-full px-2 md:px-8 h-full">
+          <div className="flex min-w-0 flex-col md:flex-row md:items-stretch md:gap-4">
+            <div className="flex h-20 shrink-0 items-center gap-2 py-1 md:gap-3">
               <a 
                 href="#" 
                 onClick={(e) => handleNavClick('home', e)}
@@ -74,12 +59,11 @@ export default function Navbar({
               </a>
             </div>
 
-            {/* Desktop Navigation Links - Structured as contiguous Mondrian blocks */}
-            <nav className="hidden md:flex items-stretch ml-4 border-l-[3px] border-black h-20">
+            <nav className="no-scrollbar flex h-8 w-full shrink-0 items-stretch overflow-x-auto md:ml-4 md:h-20 md:w-auto md:border-l-[3px] md:border-black">
               <a
                 href="#"
                 onClick={(e) => handleNavClick('home', e)}
-                className={`label-nav transition-all duration-150 px-6 flex items-center border-r-[3px] border-black ${
+                className={`label-nav shrink-0 transition-all duration-150 px-3 md:px-6 flex items-center border-r-[3px] border-black ${
                   activeTab === 'home'
                     ? 'bg-[#ef4444] text-white'
                     : 'bg-white text-black hover:bg-[#ef4444]/10'
@@ -91,7 +75,7 @@ export default function Navbar({
               <a
                 href="#"
                 onClick={(e) => handleNavClick('portfolio', e)}
-                className={`label-nav transition-all duration-150 px-6 flex items-center border-r-[3px] border-black ${
+                className={`label-nav shrink-0 transition-all duration-150 px-3 md:px-6 flex items-center border-r-[3px] border-black ${
                   activeTab === 'portfolio'
                     ? 'bg-[#facc15] text-black'
                     : 'bg-white text-black hover:bg-[#facc15]/20'
@@ -103,7 +87,7 @@ export default function Navbar({
               <a
                 href="#"
                 onClick={(e) => handleNavClick('notebook', e)}
-                className={`label-nav transition-all duration-150 px-6 flex items-center border-r-[3px] border-black ${
+                className={`label-nav shrink-0 transition-all duration-150 px-3 md:px-6 flex items-center border-r-[3px] border-black ${
                   activeTab === 'notebook'
                     ? 'bg-[#2563eb] text-white'
                     : 'bg-white text-black hover:bg-[#2563eb]/10'
@@ -115,7 +99,7 @@ export default function Navbar({
               <a
                 href="#"
                 onClick={(e) => handleNavClick('editor', e)}
-                className={`label-nav transition-all duration-150 px-6 flex items-center border-r-[3px] border-black ${
+                className={`label-nav shrink-0 transition-all duration-150 px-3 md:px-6 flex items-center border-r-[3px] border-black ${
                   activeTab === 'editor'
                     ? 'bg-black text-white'
                     : 'bg-white text-black hover:bg-black/10'
@@ -127,14 +111,13 @@ export default function Navbar({
             </nav>
           </div>
 
-          {/* Right Side: Actions - structured inside a white block with black borders */}
-          <div className="flex items-stretch border-l-[3px] border-black">
-            <button className="btn-icon px-5 border-r-[3px] border-black" aria-label="Search">
+          <div className="absolute right-2 top-0 flex h-20 items-stretch border-l-[3px] border-black bg-white md:static md:right-auto md:top-auto md:h-auto">
+            <button className="btn-icon px-1 border-r-[3px] border-black md:px-5" aria-label="Search">
               <Search className="w-4 h-4 text-black" />
             </button>
             <button 
               onClick={(e) => handleNavClick('editor', e)}
-              className="btn-icon px-5" 
+              className="btn-icon px-1 md:px-5"
               aria-label="Profile"
               title={isAuthenticated ? `Redacción: ${userName}` : 'Acceso de redacción'}
             >
@@ -143,7 +126,7 @@ export default function Navbar({
             {isAuthenticated && canEditSite && (
               <button
                 onClick={onToggleVisualEdit}
-                className={`btn-icon border-l-[3px] border-black px-3 ${visualEditMode ? 'bg-[#facc15]' : ''}`}
+                className={`btn-icon border-l-[3px] border-black px-1 md:px-3 ${visualEditMode ? 'bg-[#facc15]' : ''}`}
                 aria-label={visualEditMode ? 'Salir del modo diseño' : 'Editar diseño del sitio'}
                 title={visualEditMode ? 'Salir del modo diseño' : 'Editar diseño del sitio'}
               >
@@ -153,7 +136,7 @@ export default function Navbar({
             {isAuthenticated && (
               <button
                 onClick={onLogout}
-                className="btn-icon border-l-[3px] border-black px-3"
+                className="btn-icon border-l-[3px] border-black px-1 md:px-3"
                 aria-label="Cerrar sesión"
                 title="Cerrar sesión"
               >
@@ -163,106 +146,6 @@ export default function Navbar({
           </div>
         </div>
       </header>
-
-      {/* Mobile Drawer Overlay */}
-      {mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-[#1a1c1c]/50 z-40 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-          id="mobile-drawer-overlay"
-        />
-      )}
-
-      {/* Mobile Drawer Menu - Styled with heavy borders and primary color squares */}
-      <div 
-        data-site-region="global"
-        className={`fixed top-0 left-0 h-full w-64 bg-white border-r-[4px] border-black z-50 shadow-2xl transition-transform duration-300 md:hidden pt-24 px-6 ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        id="mobile-drawer"
-      >
-        <div className="space-y-6">
-          <div className="border-b-2 border-black pb-4">
-            <h3 className="font-mono text-xs font-bold text-black tracking-widest uppercase">Navegación</h3>
-          </div>
-          <nav className="flex flex-col gap-3">
-            <a
-              href="#"
-              onClick={(e) => handleNavClick('home', e)}
-              className={`label-nav py-3 px-4 border-2 border-black flex items-center gap-3 transition-colors ${
-                activeTab === 'home'
-                  ? 'bg-[#ef4444] text-white'
-                  : 'bg-white text-black hover:bg-[#ef4444]/10'
-              }`}
-            >
-              <div className="w-3 h-3 bg-[#ef4444] border border-black"></div>
-              Revista / Logs
-            </a>
-            {isAuthenticated && canEditSite && (
-              <button
-                type="button"
-                onClick={() => {
-                  onToggleVisualEdit();
-                  setMobileMenuOpen(false);
-                }}
-                className={`label-nav py-3 px-4 border-2 border-black flex items-center gap-3 text-left transition-colors ${
-                  visualEditMode ? 'bg-[#facc15] text-black' : 'bg-white text-black hover:bg-yellow-50'
-                }`}
-              >
-                <Palette className="h-4 w-4 text-black" />
-                {visualEditMode ? 'Salir del modo diseño' : 'Editar diseño'}
-              </button>
-            )}
-            <a
-              href="#"
-              onClick={(e) => handleNavClick('portfolio', e)}
-              className={`label-nav py-3 px-4 border-2 border-black flex items-center gap-3 transition-colors ${
-                activeTab === 'portfolio'
-                  ? 'bg-[#facc15] text-black'
-                  : 'bg-white text-black hover:bg-[#facc15]/20'
-              }`}
-            >
-              <div className="w-3 h-3 bg-[#facc15] border border-black"></div>
-              Proyecto Taller
-            </a>
-            <a
-              href="#"
-              onClick={(e) => handleNavClick('notebook', e)}
-              className={`label-nav py-3 px-4 border-2 border-black flex items-center gap-3 transition-colors ${
-                activeTab === 'notebook'
-                  ? 'bg-[#2563eb] text-white'
-                  : 'bg-white text-black hover:bg-[#2563eb]/10'
-              }`}
-            >
-              <div className="w-3 h-3 bg-[#2563eb] border border-black"></div>
-              Bitácora Alumnos
-            </a>
-            <a
-              href="#"
-              onClick={(e) => handleNavClick('editor', e)}
-              className={`label-nav py-3 px-4 border-2 border-black flex items-center gap-3 transition-colors ${
-                activeTab === 'editor'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-black/10'
-              }`}
-            >
-              <div className="w-3 h-3 bg-black border border-white"></div>
-              Redacción
-            </a>
-          </nav>
-
-          <div className="pt-8 border-t-2 border-black flex flex-col gap-2">
-            <div className="flex gap-1.5 justify-center">
-              <div className="w-8 h-8 bg-[#ef4444] border-2 border-black"></div>
-              <div className="w-8 h-8 bg-[#facc15] border-2 border-black"></div>
-              <div className="w-8 h-8 bg-[#2563eb] border-2 border-black"></div>
-            </div>
-            <p className="font-mono text-[9px] text-center text-gray-500 uppercase font-bold tracking-widest mt-2">
-              Edificación y Obra Civil
-            </p>
-          </div>
-        </div>
-      </div>
     </>
   );
 }

@@ -63,10 +63,10 @@ async function request<T>(path: string, token?: string, options: RequestInit = {
   return (payload as ApiEnvelope<T>).data;
 }
 
-export async function login(email: string, password: string): Promise<AuthSession> {
+export async function login(username: string, password: string): Promise<AuthSession> {
   return request<AuthSession>('/auth/login', undefined, {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ username, password }),
   });
 }
 

@@ -1,5 +1,5 @@
-import { useState, FormEvent } from 'react';
-import { ArrowUpRight, Check, Hammer, Award, ShieldCheck, HelpCircle, HardHat, RefreshCw, Layers } from 'lucide-react';
+import { useState, useEffect, FormEvent } from 'react';
+import { ArrowUpRight, Check, Hammer, Award, ShieldCheck, HelpCircle, HardHat, RefreshCw, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 import { featuredProjects } from '../data';
 import { MagazineArticle, SiteVisualConfig } from '../types';
 import CustomSiteModules from './CustomSiteModules';
@@ -24,6 +24,7 @@ export default function HomeFeed({
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [newsletterEmail, setNewsletterEmail] = useState<string>('');
   const [newsletterSuccess, setNewsletterSuccess] = useState<boolean>(false);
+  const [featuredIndex, setFeaturedIndex] = useState<number>(0);
 
   // Modal control states
   const [showCalculator, setShowCalculator] = useState<boolean>(false);
@@ -45,7 +46,7 @@ export default function HomeFeed({
     mask: false,
   });
 
-  const categories = ['ALL', 'TECNOLOGÍA DE MEZCLAS', 'SEGURIDAD EN OBRA', 'SALIDAS PROFESIONALES'];
+  const categories = ['ALL', ...Array.from(new Set(articles.map((article) => article.category).filter(Boolean)))];
 
   const filteredArticles = selectedCategory === 'ALL'
     ? articles
@@ -62,7 +63,26 @@ export default function HomeFeed({
     }
   };
 
-  const mainFeaturedArticle = articles[0];
+  const featuredArticles = articles.slice(0, 4);
+  const currentFeatured = featuredArticles.length > 0
+    ? featuredArticles[featuredIndex % featuredArticles.length]
+    : undefined;
+
+  useEffect(() => {
+    if (featuredArticles.length <= 1) return;
+    const timer = setInterval(() => {
+      setFeaturedIndex((prev) => (prev + 1) % featuredArticles.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [featuredArticles.length]);
+
+  const goToPrevFeatured = () => {
+    setFeaturedIndex((prev) => (prev - 1 + featuredArticles.length) % featuredArticles.length);
+  };
+
+  const goToNextFeatured = () => {
+    setFeaturedIndex((prev) => (prev + 1) % featuredArticles.length);
+  };
 
   // Calculator logic based on standard real-world construction dosages:
   // - structural concrete (1:2:3): ~300kg cement, 650kg sand, 1100kg gravel, 180L water per m3
@@ -262,46 +282,80 @@ export default function HomeFeed({
         </div>
       </section>
 
-      {/* Hero Featured Article Section */}
-      {mainFeaturedArticle && (
+      {/* Hero Featured Article Section (Carousel) */}
+      {currentFeatured && (
       <section data-site-module="home-featured-article" data-site-page="home" className="px-4 md:px-8 mt-12">
-        <div className="border-[3px] border-black grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden bg-white">
-          <div className="lg:col-span-7 group cursor-pointer overflow-hidden border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-black" onClick={() => onArticleClick(mainFeaturedArticle)}>
+        <div className="relative border-[3px] border-black grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden bg-white">
+          <div className="relative lg:col-span-7 group cursor-pointer overflow-hidden border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-black" onClick={() => onArticleClick(currentFeatured)}>
             <div className="aspect-[16/10] w-full overflow-hidden bg-gray-100">
-              <img 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102" 
-                src={mainFeaturedArticle.heroImage} 
-                alt={mainFeaturedArticle.title}
+              <img
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102"
+                src={currentFeatured.heroImage}
+                alt={currentFeatured.title}
                 referrerPolicy="no-referrer"
               />
             </div>
+            {featuredArticles.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToPrevFeatured(); }}
+                  aria-label="Publicación destacada anterior"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white border-2 border-black p-1.5 hover:bg-[#facc15] transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-black" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToNextFeatured(); }}
+                  aria-label="Siguiente publicación destacada"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white border-2 border-black p-1.5 hover:bg-[#facc15] transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-black" />
+                </button>
+              </>
+            )}
           </div>
           <div className="lg:col-span-5 p-8 md:p-12 flex flex-col justify-between bg-white">
             <div className="space-y-4">
               <div className="flex gap-2">
                 <span className="tag-red">
-                  {mainFeaturedArticle.tag}
+                  {currentFeatured.tag}
                 </span>
                 <span className="tag-black">
                   DESTACADO
                 </span>
               </div>
-              <h1 
-                onClick={() => onArticleClick(mainFeaturedArticle)}
+              <h1
+                onClick={() => onArticleClick(currentFeatured)}
                 className="font-serif font-black text-2xl md:text-3xl lg:text-4xl text-black hover:text-[#ef4444] cursor-pointer transition-colors leading-tight"
               >
-                {mainFeaturedArticle.title}
+                {currentFeatured.title}
               </h1>
               <p className="font-sans text-sm text-gray-600 leading-relaxed font-medium">
-                {mainFeaturedArticle.excerpt}
+                {currentFeatured.excerpt}
               </p>
             </div>
-            <button 
-              onClick={() => onArticleClick(mainFeaturedArticle)}
-              className="btn-outline mt-8 w-fit px-6 py-3.5"
-            >
-              LEER LECCIÓN TÉCNICA
-            </button>
+            <div className="flex items-center justify-between mt-8">
+              <button
+                onClick={() => onArticleClick(currentFeatured)}
+                className="btn-outline w-fit px-6 py-3.5"
+              >
+                LEER LECCIÓN TÉCNICA
+              </button>
+              {featuredArticles.length > 1 && (
+                <div className="flex gap-2">
+                  {featuredArticles.map((art, idx) => (
+                    <button
+                      key={art.id}
+                      onClick={() => setFeaturedIndex(idx)}
+                      aria-label={`Ir a la publicación destacada ${idx + 1}`}
+                      className={`w-2.5 h-2.5 border-2 border-black transition-colors ${
+                        idx === featuredIndex % featuredArticles.length ? 'bg-black' : 'bg-white'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

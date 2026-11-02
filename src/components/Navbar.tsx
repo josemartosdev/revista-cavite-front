@@ -1,5 +1,5 @@
 import { MouseEvent } from 'react';
-import { Search, HardHat, LogOut, Palette } from 'lucide-react';
+import { HardHat, LogOut, Palette } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'home' | 'portfolio' | 'notebook' | 'editor';
@@ -112,12 +112,9 @@ export default function Navbar({
           </div>
 
           <div className="absolute right-2 top-0 flex h-20 items-stretch border-l-[3px] border-black bg-white md:static md:right-auto md:top-auto md:h-auto">
-            <button className="btn-icon px-1 border-r-[3px] border-black md:px-5" aria-label="Search">
-              <Search className="w-4 h-4 text-black" />
-            </button>
-            <button 
+            <button
               onClick={(e) => handleNavClick('editor', e)}
-              className="btn-icon px-1 md:px-5"
+              className="btn-icon px-1 border-r-[3px] border-black md:px-5"
               aria-label="Profile"
               title={isAuthenticated ? `Redacción: ${userName}` : 'Acceso de redacción'}
             >

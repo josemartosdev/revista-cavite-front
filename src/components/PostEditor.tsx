@@ -1,7 +1,7 @@
-import { FormEvent, useState } from 'react';
-import { Loader2, Pencil, Send, Trash2 } from 'lucide-react';
-import { CONTENT_SECTIONS, ContentSection, EditorBlock, MagazineArticle, SECTION_CATEGORIES } from '../types';
-import { CreateArticlePayload } from '../services/api';
+import { FormEvent, useRef, useState } from 'react';
+import { ImagePlus, Loader2, Pencil, Plus, Send, Trash2 } from 'lucide-react';
+import { CONTENT_SECTIONS, ContentSection, EditorBlock, MagazineArticle } from '../types';
+import { CreateArticlePayload, uploadMedia } from '../services/api';
 import RichTextEditor from './RichTextEditor';
 
 interface PostEditorProps {
@@ -11,10 +11,12 @@ interface PostEditorProps {
   articlesError?: string;
   defaultSection: ContentSection;
   editingArticle?: MagazineArticle;
+  categories: Record<ContentSection, string[]>;
   onPublish: (payload: CreateArticlePayload) => Promise<MagazineArticle>;
   onPublished: (article: MagazineArticle) => void;
   onEdit: (article: MagazineArticle) => void;
   onDelete: (article: MagazineArticle) => Promise<void>;
+  onAddCategory: (section: ContentSection, category: string) => Promise<void>;
 }
 
 function escapeHtml(text: string): string {
@@ -46,15 +48,17 @@ export default function PostEditor({
   articlesError,
   defaultSection,
   editingArticle,
+  categories,
   onPublish,
   onPublished,
   onEdit,
   onDelete,
+  onAddCategory,
 }: PostEditorProps) {
   const [section, setSection] = useState<ContentSection>(editingArticle?.section || defaultSection);
   const [title, setTitle] = useState(editingArticle?.title || '');
   const [category, setCategory] = useState<string>(
-    editingArticle?.category || SECTION_CATEGORIES[editingArticle?.section || defaultSection][0]
+    editingArticle?.category || categories[editingArticle?.section || defaultSection][0]
   );
   const [excerpt, setExcerpt] = useState(editingArticle?.excerpt || '');
   const [heroImage, setHeroImage] = useState(editingArticle?.heroImage || '');
@@ -62,10 +66,66 @@ export default function PostEditor({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [heroUploadError, setHeroUploadError] = useState('');
+  const heroFileInputRef = useRef<HTMLInputElement>(null);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [categoryError, setCategoryError] = useState('');
 
   const handleSectionChange = (nextSection: ContentSection) => {
     setSection(nextSection);
-    setCategory(SECTION_CATEGORIES[nextSection][0]);
+    setCategory(categories[nextSection][0]);
+    setAddingCategory(false);
+  };
+
+  const handleStartNewCategory = () => {
+    setCategoryError('');
+    setNewCategoryName('');
+    setAddingCategory(true);
+  };
+
+  const handleConfirmNewCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      setCategoryError('Escribe un nombre para la categoría.');
+      return;
+    }
+    setCategorySaving(true);
+    setCategoryError('');
+    try {
+      await onAddCategory(section, trimmed);
+      setCategory(trimmed);
+      setAddingCategory(false);
+      setNewCategoryName('');
+    } catch (addError) {
+      setCategoryError(addError instanceof Error ? addError.message : 'No se pudo crear la categoría.');
+    } finally {
+      setCategorySaving(false);
+    }
+  };
+
+  const handlePickHeroImage = () => {
+    setHeroUploadError('');
+    heroFileInputRef.current?.click();
+  };
+
+  const handleHeroFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setUploadingHero(true);
+    setHeroUploadError('');
+    try {
+      const media = await uploadMedia(token, file);
+      setHeroImage(media.url);
+    } catch (uploadError) {
+      setHeroUploadError(uploadError instanceof Error ? uploadError.message : 'No se pudo subir la imagen.');
+    } finally {
+      setUploadingHero(false);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -138,26 +198,96 @@ export default function PostEditor({
             </label>
             <label className="block">
               <span className="label-mono-sm mb-2 block text-black">CATEGORÍA</span>
-              <select
-                required
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                className="w-full border-2 border-black bg-white px-3 py-3 font-mono text-xs font-bold text-black outline-none focus:border-[#2563eb]"
-              >
-                {SECTION_CATEGORIES[section].map((articleCategory) => (
-                  <option key={articleCategory} value={articleCategory}>{articleCategory}</option>
-                ))}
-              </select>
+              {!addingCategory ? (
+                <div className="flex gap-2">
+                  <select
+                    required
+                    value={category}
+                    onChange={(event) => setCategory(event.target.value)}
+                    className="w-full border-2 border-black bg-white px-3 py-3 font-mono text-xs font-bold text-black outline-none focus:border-[#2563eb]"
+                  >
+                    {categories[section].map((articleCategory) => (
+                      <option key={articleCategory} value={articleCategory}>{articleCategory}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleStartNewCategory}
+                    title="Crear una categoría nueva"
+                    className="flex shrink-0 items-center gap-2 border-2 border-black bg-white px-3 py-2 font-mono text-[10px] font-black hover:bg-[#facc15]"
+                  >
+                    <Plus className="h-4 w-4" /> NUEVA
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    autoFocus
+                    value={newCategoryName}
+                    onChange={(event) => setNewCategoryName(event.target.value)}
+                    placeholder="Nombre de la categoría nueva"
+                    className="w-full border-2 border-black px-3 py-3 font-mono text-xs font-bold text-black outline-none focus:border-[#2563eb]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleConfirmNewCategory}
+                    disabled={categorySaving}
+                    className="flex shrink-0 items-center gap-2 border-2 border-black bg-[#facc15] px-3 py-2 font-mono text-[10px] font-black disabled:opacity-50"
+                  >
+                    {categorySaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'GUARDAR'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddingCategory(false)}
+                    disabled={categorySaving}
+                    className="shrink-0 border-2 border-black bg-white px-3 py-2 font-mono text-[10px] font-black hover:bg-gray-100 disabled:opacity-50"
+                  >
+                    CANCELAR
+                  </button>
+                </div>
+              )}
+              {categoryError && (
+                <span className="mt-2 block font-mono text-[10px] font-bold text-[#ef4444]">{categoryError}</span>
+              )}
             </label>
             <label className="block">
-              <span className="label-mono-sm mb-2 block text-black">IMAGEN DE PORTADA (URL)</span>
-              <input
-                type="url"
-                value={heroImage}
-                onChange={(event) => setHeroImage(event.target.value)}
-                placeholder="https://..."
-                className="w-full border-2 border-black px-3 py-3 font-sans text-sm text-black outline-none focus:border-[#2563eb]"
-              />
+              <span className="label-mono-sm mb-2 block text-black">IMAGEN DE PORTADA</span>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={heroImage}
+                  onChange={(event) => setHeroImage(event.target.value)}
+                  placeholder="https://... o sube una foto"
+                  className="w-full border-2 border-black px-3 py-3 font-sans text-sm text-black outline-none focus:border-[#2563eb]"
+                />
+                <button
+                  type="button"
+                  onClick={handlePickHeroImage}
+                  disabled={uploadingHero}
+                  title="Subir foto desde el ordenador"
+                  className="flex shrink-0 items-center gap-2 border-2 border-black bg-white px-3 py-2 font-mono text-[10px] font-black hover:bg-[#facc15] disabled:opacity-50"
+                >
+                  {uploadingHero ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                  SUBIR
+                </button>
+                <input
+                  ref={heroFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleHeroFileChange}
+                />
+              </div>
+              {heroUploadError && (
+                <span className="mt-2 block font-mono text-[10px] font-bold text-[#ef4444]">{heroUploadError}</span>
+              )}
+              {heroImage && (
+                <img
+                  src={heroImage}
+                  alt="Vista previa de la portada"
+                  className="mt-3 h-32 w-full border-2 border-black object-cover"
+                />
+              )}
             </label>
             <label className="block md:col-span-2">
               <span className="label-mono-sm mb-2 block text-black">RESUMEN</span>

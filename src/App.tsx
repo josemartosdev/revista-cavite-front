@@ -193,6 +193,23 @@ export default function App() {
     }
   };
 
+  const handleAddCategory = async (section: ContentSection, category: string) => {
+    if (!token) {
+      throw new Error('Inicia sesión de nuevo para crear categorías.');
+    }
+    const current = siteConfig.categories[section] || [];
+    if (current.some((existing) => existing.toLowerCase() === category.toLowerCase())) {
+      return;
+    }
+    const updatedConfig: SiteVisualConfig = {
+      ...siteConfig,
+      categories: { ...siteConfig.categories, [section]: [...current, category] },
+    };
+    const saved = await saveSiteVisualConfig(token, updatedConfig);
+    setSiteConfig(saved);
+    setSavedSiteConfig(saved);
+  };
+
   const handleCancelVisualChanges = () => {
     setSiteConfig(savedSiteConfig);
     setVisualEditMode(false);
@@ -334,10 +351,12 @@ export default function App() {
               articlesError={myArticlesError}
               defaultSection={defaultPostSection}
               editingArticle={editingPost}
+              categories={siteConfig.categories}
               onPublish={handlePublish}
               onPublished={handlePublished}
               onEdit={(article) => setEditingPost(article)}
               onDelete={handleDeletePost}
+              onAddCategory={handleAddCategory}
             />
           ) : (
             <LoginPanel onLogin={handleLogin} onAuthenticated={handleAuthenticated} />

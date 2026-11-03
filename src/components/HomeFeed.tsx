@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowUpRight, Check, Hammer, Award, ShieldCheck, HelpCircle, HardHat, RefreshCw, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 import { featuredProjects } from '../data';
 import { MagazineArticle, SiteVisualConfig } from '../types';
@@ -22,8 +22,6 @@ export default function HomeFeed({
   siteConfig,
 }: HomeFeedProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [newsletterEmail, setNewsletterEmail] = useState<string>('');
-  const [newsletterSuccess, setNewsletterSuccess] = useState<boolean>(false);
   const [featuredIndex, setFeaturedIndex] = useState<number>(0);
 
   // Modal control states
@@ -51,17 +49,6 @@ export default function HomeFeed({
   const filteredArticles = selectedCategory === 'ALL'
     ? articles
     : articles.filter(art => art.category === selectedCategory);
-
-  const handleSubscribe = (e: FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail.trim()) {
-      setNewsletterSuccess(true);
-      setTimeout(() => {
-        setNewsletterSuccess(false);
-        setNewsletterEmail('');
-      }, 5000);
-    }
-  };
 
   const featuredArticles = articles.slice(0, 4);
   const currentFeatured = featuredArticles.length > 0
@@ -509,55 +496,6 @@ export default function HomeFeed({
             )}
           </div>
 
-        </div>
-      </section>
-
-      {/* Newsletter Section */}
-      <section data-site-module="home-newsletter" data-site-page="home" className="mt-20 bg-white border-t-[3px] border-b-[3px] border-black py-16">
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <span className="font-mono text-xs font-black tracking-widest text-[#ef4444] mb-2 block uppercase">
-            SINDICACIÓN
-          </span>
-          <h2 className="font-serif font-black text-2xl md:text-3xl text-black mb-6">
-            Recibe alertas de convocatorias, cursos y becas de edificación
-          </h2>
-          
-          {newsletterSuccess ? (
-            <div className="p-6 bg-[#fafaf8] border-2 border-black text-center" id="newsletter-success">
-              <p className="font-serif italic font-bold text-[#ef4444] text-lg">¡Suscripción completada!</p>
-              <p className="font-mono text-[10px] text-gray-600 mt-2 font-bold uppercase">
-                Te mantendremos al tanto de las novedades del departamento del I.E.S. Virgen del Mar.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubscribe} className="flex flex-col md:flex-row gap-3 items-end" id="newsletter-form">
-              <div className="w-full text-left">
-                <label className="font-mono text-[9px] font-black text-black tracking-widest mb-1 block uppercase">
-                  DIRECCIÓN DE CORREO ELECTRÓNICO
-                </label>
-                <input 
-                  className="form-input" 
-                  placeholder="alumno@iesvirgendelmar.es" 
-                  type="email"
-                  required
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                />
-              </div>
-              <button 
-                className="btn-primary px-8 py-3.5 h-[48px]"
-                type="submit"
-              >
-                SUSCRIBIRME
-              </button>
-            </form>
-          )}
-          
-          {!newsletterSuccess && (
-            <p className="font-mono text-[10px] text-gray-500 mt-4 italic font-bold uppercase">
-              Boletín académico libre de spam. Datos protegidos según RGPD.
-            </p>
-          )}
         </div>
       </section>
 

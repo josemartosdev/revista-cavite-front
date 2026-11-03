@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { X, Calendar, Clock, User, Sparkles, Loader2, Award, HardHat, FileText } from 'lucide-react';
+import { X, Calendar, Clock, User, Award, HardHat, FileText } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomeFeed from './components/HomeFeed';
@@ -53,10 +53,6 @@ export default function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(() => Boolean(sessionStorage.getItem('revista_access_token')));
   const [authError, setAuthError] = useState('');
-
-  // AI Summary states for open article
-  const [articleSummary, setArticleSummary] = useState<string>('');
-  const [aiLoading, setAiLoading] = useState<boolean>(false);
 
   useEffect(() => {
     getPublishedArticles()
@@ -225,45 +221,7 @@ export default function App() {
 
   const handleArticleClick = (article: MagazineArticle) => {
     setSelectedArticle(article);
-    setArticleSummary('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleGenerateAISummary = async () => {
-    if (!selectedArticle) return;
-    setAiLoading(true);
-    setArticleSummary('');
-
-    const fullContent = selectedArticle.blocks?.length
-      ? selectedArticle.blocks
-          .filter(block => block.type === 'text' || block.type === 'heading1' || block.type === 'heading2')
-          .map(block => block.content)
-          .join('\n\n')
-      : selectedArticle.excerpt;
-
-    try {
-      const response = await fetch('/api/ai/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task: 'SUMMARY',
-          title: selectedArticle.title,
-          content: fullContent
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('No se pudo establecer comunicación con el servidor de IA.');
-      }
-
-      const data = await response.json();
-      setArticleSummary(data.result);
-    } catch (e: any) {
-      console.error(e);
-      setArticleSummary('Error: No se pudo conectar con la API de Gemini. Compruebe la clave GEMINI_API_KEY en la configuración.');
-    } finally {
-      setAiLoading(false);
-    }
   };
 
   return (
@@ -451,39 +409,6 @@ export default function App() {
                     ))
                 ) : (
                   <p>{selectedArticle.excerpt}</p>
-                )}
-              </div>
-
-              {/* Interactive AI Companion Tool styled as a Mondrian bottom card */}
-              <div className="bg-gray-50 border-[3px] border-black p-5 space-y-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-black fill-black" />
-                    <span className="font-mono text-xs font-black text-black tracking-widest uppercase">
-                      LECTURA ASISTIDA POR GEMINI AI
-                    </span>
-                  </div>
-                  <button 
-                    onClick={handleGenerateAISummary}
-                    disabled={aiLoading}
-                className="btn-primary px-4 py-2 disabled:opacity-40 w-full sm:w-auto"
-                  >
-                    {aiLoading ? 'ANALIZANDO...' : 'SINTETIZAR LECCIÓN'}
-                  </button>
-                </div>
-
-                {aiLoading && (
-                  <div className="flex items-center gap-3 py-2 text-gray-500 italic font-sans text-xs font-bold">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#ef4444]" />
-                    Construyendo síntesis conceptual con IA...
-                  </div>
-                )}
-
-                {articleSummary && (
-                  <div className="p-4 bg-white border-2 border-black font-sans text-xs text-gray-700 leading-relaxed whitespace-pre-line border-l-[6px] border-l-[#ef4444] font-semibold">
-                    <p className="font-mono text-[9px] font-black text-[#ef4444] mb-1.5 uppercase">SÍNTESIS INTELIGENTE DEL PROFESORADO:</p>
-                    {articleSummary}
-                  </div>
                 )}
               </div>
 

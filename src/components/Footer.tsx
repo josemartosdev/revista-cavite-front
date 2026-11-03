@@ -96,7 +96,7 @@ export default function Footer({ onNavClick, config }: FooterProps) {
         <ul className="space-y-3 font-mono text-xs text-gray-700 font-medium">
           <li>
             <a 
-              href="#" 
+              href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/category/oferta-formativa/oferta-educativa/construccion-oferta-educativa/" 
               onClick={(e) => { e.preventDefault(); onNavClick('portfolio'); }}
               className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
             >
@@ -105,20 +105,20 @@ export default function Footer({ onNavClick, config }: FooterProps) {
           </li>
           <li>
             <a 
-              href="#" 
+              href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/category/oferta-formativa/" 
               onClick={(e) => { e.preventDefault(); onNavClick('portfolio'); }}
               className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
             >
-              • Grado Superior Edificación
+              • Oferta Formativa
             </a>
           </li>
           <li>
             <a 
-              href="#" 
+              href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/author/04700430edu/"
               onClick={(e) => { e.preventDefault(); }}
               className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
             >
-              • Secretaría I.E.S.
+              • I.E.S. Virgen del mar
             </a>
           </li>
         </ul>

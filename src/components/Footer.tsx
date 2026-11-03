@@ -6,7 +6,7 @@ interface FooterProps {
   config: SiteVisualConfig;
 }
 
-const DEFAULT_CONTACT_EMAIL = 'mailto:contacto@iesvirgendelmar.es';
+const DEFAULT_CONTACT_EMAIL = 'mailto:04700430.edu@juntadeandalucia.es';
 const DEFAULT_CONTACT_LINK = '#';
 
 export default function Footer({ onNavClick, config }: FooterProps) {
@@ -95,29 +95,32 @@ export default function Footer({ onNavClick, config }: FooterProps) {
         </h4>
         <ul className="space-y-3 font-mono text-xs text-gray-700 font-medium">
           <li>
-            <a 
-              href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/category/oferta-formativa/oferta-educativa/construccion-oferta-educativa/" 
-              onClick={(e) => { e.preventDefault(); onNavClick('portfolio'); }}
-              className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
-            >
+            <a
+  href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/category/oferta-formativa/oferta-educativa/construccion-oferta-educativa/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
+>
               • Grado Medio Construcción
             </a>
           </li>
           <li>
-            <a 
-              href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/category/oferta-formativa/" 
-              onClick={(e) => { e.preventDefault(); onNavClick('portfolio'); }}
-              className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
-            >
+            <a
+  href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/category/oferta-formativa/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
+>
               • Oferta Formativa
             </a>
           </li>
           <li>
-            <a 
-              href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/author/04700430edu/"
-              onClick={(e) => { e.preventDefault(); }}
-              className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
-            >
+           <a
+  href="https://blogsaverroes.juntadeandalucia.es/iesvirgendelmar/author/04700430edu/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="hover:text-[#facc15] transition-colors duration-150 flex items-center gap-1.5"
+>
               • I.E.S. Virgen del mar
             </a>
           </li>

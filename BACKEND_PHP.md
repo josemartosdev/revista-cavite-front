@@ -1,6 +1,6 @@
 # Contrato para el backend PHP
 
-El frontend de la revista vive en React/Vite y el backend se desarrolla y despliega por separado. Configura `VITE_API_BASE_URL` en `.env.local` con la URL base de la API, incluyendo `/api/v1`, por ejemplo `http://localhost:8000/api/v1`. En producción debe ser una URL HTTPS.
+El frontend de la revista vive en React/Vite y el backend se desarrolla y despliega por separado. Configura `API_BASE_URL` en `.env.local` con la URL base de la API, incluyendo `/api/v1`, por ejemplo `http://localhost:8000/api/v1`. En producción debe ser una URL HTTPS.
 
 ## Rutas que consume el frontend
 

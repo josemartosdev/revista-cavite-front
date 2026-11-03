@@ -5,6 +5,10 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // Por defecto Vite solo expone al cliente las variables que empiezan por
+    // VITE_. Se añade el prefijo API_ para poder usar API_BASE_URL sin el
+    // prefijo VITE_ (algunos paneles, como el de Vercel, lo pedían así).
+    envPrefix: ['VITE_', 'API_'],
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

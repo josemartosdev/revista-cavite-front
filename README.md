@@ -14,7 +14,7 @@ View your app in AI Studio: https://ai.studio/apps/799c43bc-45ed-44cb-a432-da9fe
 
 ## Publicaciones y backend PHP
 
-El acceso de redacción y la publicación de artículos se conectan a una API PHP independiente. Configura `VITE_API_BASE_URL` en `.env.local` con la URL base de esa API. El contrato de autenticación, artículos, categorías y respuestas está descrito en [BACKEND_PHP.md](./BACKEND_PHP.md).
+El acceso de redacción y la publicación de artículos se conectan a una API PHP independiente. Configura `API_BASE_URL` en `.env.local` con la URL base de esa API. El contrato de autenticación, artículos, categorías y respuestas está descrito en [BACKEND_PHP.md](./BACKEND_PHP.md).
 
 El modo visual para administradores también requiere `GET /site-config` y `PUT /site-config`; guarda en PHP/MySQL los estilos, textos e imágenes cambiados y el orden, visibilidad y tamaño de módulos. El usuario administrador debe incluir `role: "admin"` en las respuestas de autenticación.
 

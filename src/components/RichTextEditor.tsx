@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -19,9 +19,7 @@ import {
   Image as ImageIcon,
   Undo2,
   Redo2,
-  Loader2,
 } from 'lucide-react';
-import { uploadMedia } from '../services/api';
 
 const FONT_OPTIONS = [
   { label: 'Inter', value: 'Inter, sans-serif' },
@@ -31,17 +29,12 @@ const FONT_OPTIONS = [
 ];
 
 interface RichTextEditorProps {
-  token: string;
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
 }
 
-export default function RichTextEditor({ token, value, onChange, placeholder }: RichTextEditorProps) {
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+export default function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2] } }),
@@ -69,26 +62,10 @@ export default function RichTextEditor({ token, value, onChange, placeholder }: 
 
   if (!editor) return null;
 
-  const handlePickImage = () => {
-    setUploadError('');
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-
-    setUploading(true);
-    setUploadError('');
-    try {
-      const media = await uploadMedia(token, file);
-      editor.chain().focus().setImage({ src: media.url }).run();
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : 'No se pudo subir la imagen.');
-    } finally {
-      setUploading(false);
-    }
+  const handleInsertImage = () => {
+    const url = window.prompt('URL de la imagen:', 'https://');
+    if (!url || !url.trim()) return;
+    editor.chain().focus().setImage({ src: url.trim() }).run();
   };
 
   const handleSetLink = () => {
@@ -181,13 +158,11 @@ export default function RichTextEditor({ token, value, onChange, placeholder }: 
         <button
           type="button"
           className="rich-editor-btn"
-          onClick={handlePickImage}
-          disabled={uploading}
+          onClick={handleInsertImage}
           title="Insertar imagen"
         >
-          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+          <ImageIcon className="w-4 h-4" />
         </button>
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
         <select
           className="rich-editor-select"
@@ -233,10 +208,6 @@ export default function RichTextEditor({ token, value, onChange, placeholder }: 
       <div className="rich-editor-content">
         <EditorContent editor={editor} />
       </div>
-
-      {uploadError && (
-        <p className="mt-2 font-mono text-[10px] font-bold text-[#ef4444]">{uploadError}</p>
-      )}
     </div>
   );
 }

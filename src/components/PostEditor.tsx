@@ -1,7 +1,7 @@
-import { FormEvent, useRef, useState } from 'react';
-import { ImagePlus, Loader2, Pencil, Plus, Send, Trash2 } from 'lucide-react';
+import { FormEvent, useState } from 'react';
+import { Loader2, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import { CONTENT_SECTIONS, ContentSection, EditorBlock, MagazineArticle } from '../types';
-import { CreateArticlePayload, uploadMedia } from '../services/api';
+import { CreateArticlePayload } from '../services/api';
 import RichTextEditor from './RichTextEditor';
 
 interface PostEditorProps {
@@ -66,9 +66,6 @@ export default function PostEditor({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [uploadingHero, setUploadingHero] = useState(false);
-  const [heroUploadError, setHeroUploadError] = useState('');
-  const heroFileInputRef = useRef<HTMLInputElement>(null);
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categorySaving, setCategorySaving] = useState(false);
@@ -103,28 +100,6 @@ export default function PostEditor({
       setCategoryError(addError instanceof Error ? addError.message : 'No se pudo crear la categoría.');
     } finally {
       setCategorySaving(false);
-    }
-  };
-
-  const handlePickHeroImage = () => {
-    setHeroUploadError('');
-    heroFileInputRef.current?.click();
-  };
-
-  const handleHeroFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
-    setUploadingHero(true);
-    setHeroUploadError('');
-    try {
-      const media = await uploadMedia(token, file);
-      setHeroImage(media.url);
-    } catch (uploadError) {
-      setHeroUploadError(uploadError instanceof Error ? uploadError.message : 'No se pudo subir la imagen.');
-    } finally {
-      setUploadingHero(false);
     }
   };
 
@@ -252,35 +227,13 @@ export default function PostEditor({
             </label>
             <label className="block">
               <span className="label-mono-sm mb-2 block text-black">IMAGEN DE PORTADA</span>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={heroImage}
-                  onChange={(event) => setHeroImage(event.target.value)}
-                  placeholder="https://... o sube una foto"
-                  className="w-full border-2 border-black px-3 py-3 font-sans text-sm text-black outline-none focus:border-[#2563eb]"
-                />
-                <button
-                  type="button"
-                  onClick={handlePickHeroImage}
-                  disabled={uploadingHero}
-                  title="Subir foto desde el ordenador"
-                  className="flex shrink-0 items-center gap-2 border-2 border-black bg-white px-3 py-2 font-mono text-[10px] font-black hover:bg-[#facc15] disabled:opacity-50"
-                >
-                  {uploadingHero ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                  SUBIR
-                </button>
-                <input
-                  ref={heroFileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleHeroFileChange}
-                />
-              </div>
-              {heroUploadError && (
-                <span className="mt-2 block font-mono text-[10px] font-bold text-[#ef4444]">{heroUploadError}</span>
-              )}
+              <input
+                type="url"
+                value={heroImage}
+                onChange={(event) => setHeroImage(event.target.value)}
+                placeholder="https://..."
+                className="w-full border-2 border-black px-3 py-3 font-sans text-sm text-black outline-none focus:border-[#2563eb]"
+              />
               {heroImage && (
                 <img
                   src={heroImage}
@@ -305,7 +258,6 @@ export default function PostEditor({
               <span className="label-mono-sm mb-2 block text-black">CONTENIDO</span>
               <div className="border-2 border-black">
                 <RichTextEditor
-                  token={token}
                   value={bodyHtml}
                   onChange={setBodyHtml}
                   placeholder="Escribe el artículo. Usa la barra de herramientas para añadir títulos, enlaces e imágenes."

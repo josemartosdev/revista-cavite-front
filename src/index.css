@@ -71,6 +71,12 @@ body {
   cursor: pointer;
 }
 
+.site-editable-link {
+  outline: 2px dashed #2563eb !important;
+  outline-offset: 2px;
+  cursor: pointer;
+}
+
 .site-editable-module {
   outline: 2px dashed rgba(37, 99, 235, 0.6);
   outline-offset: -2px;

@@ -181,6 +181,7 @@ Ejemplo de respuesta:
       },
       "content": {},
       "images": {},
+      "links": {},
       "modules": {},
       "customModules": {
         "home": [],
@@ -192,7 +193,7 @@ Ejemplo de respuesta:
 }
 ```
 
-El `PUT` recibe `{ "config": { ... } }` con la misma estructura. `content` guarda las modificaciones de texto por clave, `images` guarda URLs por clave, `modules` controla orden/visibilidad/ancho y `customModules` contiene módulos adicionales de texto e imagen por página. Trata las claves de contenido como identificadores opacos: no las derives de HTML ni las interpretes como SQL. El frontend también permite cargar una imagen con una URL; esta versión no recibe ni almacena archivos subidos. Cada guardado actualiza `updated_by` y `updated_at`.
+El `PUT` recibe `{ "config": { ... } }` con la misma estructura. `content` guarda las modificaciones de texto por clave, `images` guarda URLs por clave, `links` guarda URLs o `mailto:` por clave (por ejemplo los enlaces editables del pie de página), `modules` controla orden/visibilidad/ancho y `customModules` contiene módulos adicionales de texto e imagen por página. Trata las claves de contenido como identificadores opacos: no las derives de HTML ni las interpretes como SQL. El frontend también permite cargar una imagen con una URL; esta versión no recibe ni almacena archivos subidos. Cada guardado actualiza `updated_by` y `updated_at`.
 
 Los usuarios devueltos por login y `/auth/me` deben incluir `role`. El panel visual solo se muestra a `admin`, pero la comprobación decisiva de permisos siempre debe hacerse también en PHP.
 

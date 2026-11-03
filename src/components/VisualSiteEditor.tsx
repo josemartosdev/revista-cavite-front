@@ -171,6 +171,7 @@ export default function VisualSiteEditor({
     const editedElements: HTMLElement[] = [];
     const editedImages: HTMLImageElement[] = [];
     const editedBackgrounds: HTMLElement[] = [];
+    const editedLinks: HTMLAnchorElement[] = [];
     const editableModules = modules.filter((module) => module.dataset.sitePage === page);
 
     roots.forEach((scopeRoot) => {
@@ -221,6 +222,15 @@ export default function VisualSiteEditor({
           editedBackgrounds.push(element);
         }
       });
+
+      scopeRoot.querySelectorAll<HTMLAnchorElement>('[data-site-link-editable]').forEach((element) => {
+        const linkKey = `link:${element.dataset.siteLinkEditable}`;
+        element.dataset.siteLinkKey = linkKey;
+        if (editing) {
+          element.classList.add('site-editable-link');
+          editedLinks.push(element);
+        }
+      });
     });
 
     if (!editing) {
@@ -260,12 +270,25 @@ export default function VisualSiteEditor({
       imageFileInputRef.current?.click();
     };
 
+    const updateLink = (event: MouseEvent) => {
+      const element = event.currentTarget as HTMLAnchorElement;
+      const key = element.dataset.siteLinkKey;
+      if (!key) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const currentValue = config.links[key] || element.getAttribute('href') || '';
+      const nextValue = window.prompt('Enlace (usa mailto:correo@dominio.es para un correo):', currentValue);
+      if (nextValue === null) return;
+      onConfigChange({ ...config, links: { ...config.links, [key]: nextValue.trim() } });
+    };
+
     editedElements.forEach((element) => {
       element.addEventListener('blur', saveText);
       element.addEventListener('click', preventNavigation, true);
       element.addEventListener('keydown', preventNavigation, true);
     });
     [...editedImages, ...editedBackgrounds].forEach((image) => image.addEventListener('click', updateImage));
+    editedLinks.forEach((link) => link.addEventListener('click', updateLink));
 
     editableModules.forEach((module) => {
       module.draggable = true;
@@ -321,6 +344,10 @@ export default function VisualSiteEditor({
       editedBackgrounds.forEach((element) => {
         element.removeEventListener('click', updateImage);
         element.classList.remove('site-editable-image');
+      });
+      editedLinks.forEach((link) => {
+        link.removeEventListener('click', updateLink);
+        link.classList.remove('site-editable-link');
       });
       editableModules.forEach((module) => {
         module.removeAttribute('draggable');

@@ -428,6 +428,7 @@ export default function HomeFeed({
       </section>
 
       {/* Latest Articles Grid / Revista */}
+      {(filteredArticles.length > 0 || articlesError) && (
       <section data-site-module="home-articles" data-site-page="home" className="px-4 md:px-8 mt-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 border-t-[3px] border-black pt-12">
           
@@ -489,15 +490,11 @@ export default function HomeFeed({
                 </div>
               </article>
             ))}
-            {filteredArticles.length === 0 && (
-              <p className="py-8 font-mono text-xs font-bold uppercase text-gray-500">
-                Todavía no hay publicaciones en esta categoría.
-              </p>
-            )}
           </div>
 
         </div>
       </section>
+      )}
 
       <CustomSiteModules page="home" modules={siteConfig.customModules.home} />
 

@@ -1,10 +1,18 @@
 import { Share2, Mail, ShieldAlert, Award } from 'lucide-react';
+import { SiteVisualConfig } from '../types';
 
 interface FooterProps {
   onNavClick: (tab: 'home' | 'portfolio' | 'notebook' | 'editor') => void;
+  config: SiteVisualConfig;
 }
 
-export default function Footer({ onNavClick }: FooterProps) {
+const DEFAULT_CONTACT_EMAIL = 'mailto:contacto@iesvirgendelmar.es';
+const DEFAULT_CONTACT_LINK = '#';
+
+export default function Footer({ onNavClick, config }: FooterProps) {
+  const emailHref = config.links['link:footer-contact-email'] || DEFAULT_CONTACT_EMAIL;
+  const contactLinkHref = config.links['link:footer-contact-link'] || DEFAULT_CONTACT_LINK;
+
   return (
     <footer data-site-region="global" className="w-full bg-white border-t-[4px] border-black grid grid-cols-1 md:grid-cols-12 gap-0 overflow-hidden" id="platform-footer">
       
@@ -124,19 +132,26 @@ export default function Footer({ onNavClick }: FooterProps) {
             CONTACTO DEPARTAMENTO
           </h4>
           <div className="flex gap-2">
-            <button 
-              className="btn-icon w-10 h-10 border-2 border-black bg-white hover:bg-black hover:text-white"
-              title="Compartir"
-              aria-label="Compartir"
+            <a
+              href={contactLinkHref}
+              target={contactLinkHref !== '#' ? '_blank' : undefined}
+              rel={contactLinkHref !== '#' ? 'noopener noreferrer' : undefined}
+              data-site-link-editable="footer-contact-link"
+              className="btn-icon w-10 h-10 border-2 border-black bg-white hover:bg-black hover:text-white flex items-center justify-center"
+              title="Enlace"
+              aria-label="Enlace"
             >
               <Share2 className="w-4 h-4 text-black" />
-            </button>
-            <button 
-              className="btn-icon w-10 h-10 border-2 border-black bg-white hover:bg-black hover:text-white"
+            </a>
+            <a
+              href={emailHref}
+              data-site-link-editable="footer-contact-email"
+              className="btn-icon w-10 h-10 border-2 border-black bg-white hover:bg-black hover:text-white flex items-center justify-center"
+              title="E-mail"
               aria-label="E-mail"
             >
               <Mail className="w-4 h-4 text-black" />
-            </button>
+            </a>
           </div>
         </div>
 

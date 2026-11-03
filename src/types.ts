@@ -136,6 +136,7 @@ export interface SiteVisualConfig {
   };
   content: Record<string, string>;
   images: Record<string, string>;
+  links: Record<string, string>;
   modules: Record<string, SiteModuleSettings>;
   categories: Record<ContentSection, string[]>;
   navItems: NavItem[];
@@ -154,6 +155,7 @@ export const DEFAULT_SITE_VISUAL_CONFIG: SiteVisualConfig = {
   },
   content: {},
   images: {},
+  links: {},
   modules: {},
   categories: {
     magazine: [...ARTICLE_CATEGORIES],

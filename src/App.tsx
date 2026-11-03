@@ -419,11 +419,12 @@ export default function App() {
       )}
 
       {/* Footer Area */}
-      <Footer 
+      <Footer
         onNavClick={(tab) => {
           setActiveTab(tab);
           setSelectedArticle(null);
         }}
+        config={siteConfig}
       />
       <VisualSiteEditor
         token={token}

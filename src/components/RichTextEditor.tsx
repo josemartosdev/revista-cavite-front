@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { DragEvent, useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -17,9 +17,11 @@ import {
   ListOrdered,
   Link as LinkIcon,
   Image as ImageIcon,
+  Loader2,
   Undo2,
   Redo2,
 } from 'lucide-react';
+import { uploadMedia } from '../services/api';
 
 const FONT_OPTIONS = [
   { label: 'Inter', value: 'Inter, sans-serif' },
@@ -29,12 +31,18 @@ const FONT_OPTIONS = [
 ];
 
 interface RichTextEditorProps {
+  token: string;
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
 }
 
-export default function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
+export default function RichTextEditor({ token, value, onChange, placeholder }: RichTextEditorProps) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2] } }),
@@ -62,10 +70,48 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
 
   if (!editor) return null;
 
-  const handleInsertImage = () => {
-    const url = window.prompt('URL de la imagen:', 'https://');
-    if (!url || !url.trim()) return;
-    editor.chain().focus().setImage({ src: url.trim() }).run();
+  const uploadAndInsertImage = async (file: File) => {
+    setUploading(true);
+    setUploadError('');
+    try {
+      const media = await uploadMedia(token, file);
+      editor.chain().focus().setImage({ src: media.url }).run();
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'No se pudo subir la imagen.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePickImage = () => {
+    setUploadError('');
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    await uploadAndInsertImage(file);
+  };
+
+  const handleContentDragOver = (e: DragEvent<HTMLDivElement>) => {
+    if (!e.dataTransfer.types.includes('Files')) return;
+    e.preventDefault();
+    setIsDraggingImage(true);
+  };
+
+  const handleContentDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingImage(false);
+  };
+
+  const handleContentDrop = async (e: DragEvent<HTMLDivElement>) => {
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    e.preventDefault();
+    setIsDraggingImage(false);
+    await uploadAndInsertImage(file);
   };
 
   const handleSetLink = () => {
@@ -158,11 +204,13 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         <button
           type="button"
           className="rich-editor-btn"
-          onClick={handleInsertImage}
+          onClick={handlePickImage}
+          disabled={uploading}
           title="Insertar imagen"
         >
-          <ImageIcon className="w-4 h-4" />
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
         </button>
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
         <select
           className="rich-editor-select"
@@ -205,9 +253,18 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         </button>
       </div>
 
-      <div className="rich-editor-content">
+      <div
+        className={`rich-editor-content ${isDraggingImage ? 'ring-2 ring-[#2563eb] ring-inset' : ''}`}
+        onDragOver={handleContentDragOver}
+        onDragLeave={handleContentDragLeave}
+        onDrop={handleContentDrop}
+      >
         <EditorContent editor={editor} />
       </div>
+
+      {uploadError && (
+        <p className="mt-2 font-mono text-[10px] font-bold text-[#ef4444]">{uploadError}</p>
+      )}
     </div>
   );
 }

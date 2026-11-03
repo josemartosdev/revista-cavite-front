@@ -1,7 +1,7 @@
-import { FormEvent, useState } from 'react';
-import { Loader2, Pencil, Plus, Send, Trash2 } from 'lucide-react';
+import { DragEvent, FormEvent, useRef, useState } from 'react';
+import { ImagePlus, Loader2, Pencil, Plus, Send, Trash2, UploadCloud } from 'lucide-react';
 import { CONTENT_SECTIONS, ContentSection, EditorBlock, MagazineArticle } from '../types';
-import { CreateArticlePayload } from '../services/api';
+import { CreateArticlePayload, uploadMedia } from '../services/api';
 import RichTextEditor from './RichTextEditor';
 
 interface PostEditorProps {
@@ -70,6 +70,10 @@ export default function PostEditor({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categorySaving, setCategorySaving] = useState(false);
   const [categoryError, setCategoryError] = useState('');
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [heroUploadError, setHeroUploadError] = useState('');
+  const [isDraggingHero, setIsDraggingHero] = useState(false);
+  const heroFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSectionChange = (nextSection: ContentSection) => {
     setSection(nextSection);
@@ -101,6 +105,49 @@ export default function PostEditor({
     } finally {
       setCategorySaving(false);
     }
+  };
+
+  const uploadHeroFile = async (file: File) => {
+    setUploadingHero(true);
+    setHeroUploadError('');
+    try {
+      const media = await uploadMedia(token, file);
+      setHeroImage(media.url);
+    } catch (uploadError) {
+      setHeroUploadError(uploadError instanceof Error ? uploadError.message : 'No se pudo subir la imagen.');
+    } finally {
+      setUploadingHero(false);
+    }
+  };
+
+  const handlePickHeroImage = () => {
+    setHeroUploadError('');
+    heroFileInputRef.current?.click();
+  };
+
+  const handleHeroFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    await uploadHeroFile(file);
+  };
+
+  const handleHeroDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingHero(true);
+  };
+
+  const handleHeroDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingHero(false);
+  };
+
+  const handleHeroDrop = async (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingHero(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    await uploadHeroFile(file);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -227,19 +274,57 @@ export default function PostEditor({
             </label>
             <label className="block">
               <span className="label-mono-sm mb-2 block text-black">IMAGEN DE PORTADA</span>
-              <input
-                type="url"
-                value={heroImage}
-                onChange={(event) => setHeroImage(event.target.value)}
-                placeholder="https://..."
-                className="w-full border-2 border-black px-3 py-3 font-sans text-sm text-black outline-none focus:border-[#2563eb]"
-              />
-              {heroImage && (
-                <img
-                  src={heroImage}
-                  alt="Vista previa de la portada"
-                  className="mt-3 h-32 w-full border-2 border-black object-cover"
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={heroImage}
+                  onChange={(event) => setHeroImage(event.target.value)}
+                  placeholder="https://... o sube una foto"
+                  className="w-full border-2 border-black px-3 py-3 font-sans text-sm text-black outline-none focus:border-[#2563eb]"
                 />
+                <button
+                  type="button"
+                  onClick={handlePickHeroImage}
+                  disabled={uploadingHero}
+                  title="Subir foto desde el ordenador"
+                  className="flex shrink-0 items-center gap-2 border-2 border-black bg-white px-3 py-2 font-mono text-[10px] font-black hover:bg-[#facc15] disabled:opacity-50"
+                >
+                  {uploadingHero ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                  SUBIR
+                </button>
+                <input
+                  ref={heroFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleHeroFileChange}
+                />
+              </div>
+              <div
+                onDragOver={handleHeroDragOver}
+                onDragLeave={handleHeroDragLeave}
+                onDrop={handleHeroDrop}
+                className={`mt-3 flex min-h-[8rem] flex-col items-center justify-center gap-2 border-2 border-dashed px-3 py-4 text-center transition-colors ${
+                  isDraggingHero ? 'border-[#2563eb] bg-blue-50' : 'border-gray-300 bg-gray-50'
+                }`}
+              >
+                {heroImage ? (
+                  <img
+                    src={heroImage}
+                    alt="Vista previa de la portada"
+                    className="h-32 w-full border-2 border-black object-cover"
+                  />
+                ) : (
+                  <>
+                    <UploadCloud className="h-6 w-6 text-gray-400" />
+                    <p className="font-mono text-[10px] font-bold uppercase text-gray-500">
+                      Arrastra una imagen aquí
+                    </p>
+                  </>
+                )}
+              </div>
+              {heroUploadError && (
+                <span className="mt-2 block font-mono text-[10px] font-bold text-[#ef4444]">{heroUploadError}</span>
               )}
             </label>
             <label className="block md:col-span-2">
@@ -258,6 +343,7 @@ export default function PostEditor({
               <span className="label-mono-sm mb-2 block text-black">CONTENIDO</span>
               <div className="border-2 border-black">
                 <RichTextEditor
+                  token={token}
                   value={bodyHtml}
                   onChange={setBodyHtml}
                   placeholder="Escribe el artículo. Usa la barra de herramientas para añadir títulos, enlaces e imágenes."
